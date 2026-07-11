@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rencana Stuffing — TAC System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1F2430;
+    --ink-soft:#5B6472;
+    --navy:#16233F;
+    --navy-2:#223761;
+    --amber:#E2870F;
+    --amber-soft:#FBEBD3;
+    --paper:#F3F4F1;
+    --card:#FFFFFF;
+    --line:#D9DCE0;
+    --line-soft:#E9EAE7;
+    --ok:#2F7D4F;
+    --danger:#B23B3B;
+    --radius:4px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--paper) 0px, var(--paper) 0px),
+      repeating-linear-gradient(135deg, rgba(0,0,0,0.015) 0 2px, transparent 2px 14px);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    padding:32px 16px 80px;
+  }
+  .wrap{max-width:900px;margin:0 auto;}
+
+  /* HEADER */
+  .masthead{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    margin-bottom:22px;padding-bottom:14px;
+    border-bottom:3px solid var(--navy);
+  }
+  .masthead h1{
+    font-family:'Oswald',sans-serif;font-weight:700;font-size:26px;
+    letter-spacing:0.06em;text-transform:uppercase;color:var(--navy);margin:0;
+  }
+  .masthead .sub{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-soft);
+    letter-spacing:0.04em;margin-top:2px;
+  }
+  .masthead .tag{
+    font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--navy);
+    color:#fff;padding:5px 10px;border-radius:3px;letter-spacing:0.05em;
+  }
+
+  /* PLAN LIST */
+  #plans{display:flex;flex-direction:column;gap:22px;}
+
+  .plan{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    position:relative;
+    box-shadow:0 1px 2px rgba(20,25,40,0.04);
+  }
+  .plan::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:6px;
+    background:var(--amber);border-radius:4px 0 0 4px;
+  }
+  .plan-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 18px;border-bottom:1px dashed var(--line);
+  }
+  .plan-head .plan-index{
+    font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--navy);
+    font-size:13px;letter-spacing:0.05em;
+  }
+  .plan-body{padding:18px 18px 20px;}
+
+  .field-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
+  .field{flex:1 1 220px;display:flex;flex-direction:column;gap:5px;}
+  .field.small{flex:0 1 150px;}
+  label{
+    font-size:11px;font-weight:600;color:var(--ink-soft);
+    text-transform:uppercase;letter-spacing:0.05em;
+  }
+  input[type="text"], input[type="number"], input[type="date"], select{
+    border:1px solid var(--line);border-radius:3px;padding:9px 10px;
+    font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);
+    background:#fff;
+  }
+  input:focus, select:focus{outline:2px solid var(--amber);outline-offset:1px;border-color:var(--amber);}
+  input::placeholder{color:#A6ACB6;}
+
+  .checkline{display:flex;align-items:center;gap:8px;padding:8px 0;}
+  .checkline input[type="checkbox"]{width:16px;height:16px;accent-color:var(--amber);}
+  .checkline label{text-transform:none;font-size:13px;font-weight:500;color:var(--ink);}
+
+  .divider{
+    display:flex;align-items:center;gap:10px;margin:20px 0 12px;
+  }
+  .divider .lbl{
+    font-family:'Oswald',sans-serif;font-size:12px;letter-spacing:0.1em;
+    text-transform:uppercase;color:var(--navy);white-space:nowrap;font-weight:600;
+  }
+  .divider .rule{flex:1;border-top:1px dashed var(--line);}
+
+  /* MOTIF/AREA ROWS */
+  .rows{display:flex;flex-direction:column;gap:8px;}
+  .row-item{
+    display:flex;align-items:center;gap:8px;
+  }
+  .idx-box{
+    font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;
+    color:var(--navy);background:var(--amber-soft);border:1px solid var(--line);
+    width:30px;height:38px;display:flex;align-items:center;justify-content:center;
+    border-radius:3px;flex-shrink:0;
+  }
+  .row-item input{flex:1;}
+  .row-item .rm-btn{flex-shrink:0;}
+
+  .btn{
+    font-family:'Inter',sans-serif;font-size:13px;font-weight:600;
+    border-radius:3px;padding:8px 14px;cursor:pointer;border:1px solid transparent;
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .btn:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
+  .btn-add{
+    background:#fff;border:1px dashed var(--navy-2);color:var(--navy-2);
+    align-self:flex-start;margin-top:4px;
+  }
+  .btn-add:hover{background:var(--amber-soft);border-color:var(--amber);color:var(--navy);}
+  .btn-icon{
+    background:#fff;border:1px solid var(--line);color:var(--ink-soft);
+    width:34px;height:38px;padding:0;justify-content:center;
+  }
+  .btn-icon:hover{border-color:var(--danger);color:var(--danger);}
+  .btn-danger-text{background:none;border:none;color:var(--danger);font-size:12px;padding:4px 6px;}
+  .btn-danger-text:hover{text-decoration:underline;}
+  .btn-primary{background:var(--navy);color:#fff;}
+  .btn-primary:hover{background:var(--navy-2);}
+  .btn-ghost{background:#fff;border:1px solid var(--line);color:var(--ink);}
+  .btn-ghost:hover{border-color:var(--navy);}
+
+  /* AREA BRG GROUPS */
+  .brg-group{
+    border:1px solid var(--line-soft);border-radius:3px;padding:12px 14px;
+    margin-bottom:12px;background:#FCFCFB;
+  }
+  .brg-group .brg-head{
+    display:flex;align-items:center;gap:8px;margin-bottom:10px;
+  }
+  .brg-group .brg-head .idx-box{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .brg-group .brg-head input{flex:1;}
+  .brg-group .hint{
+    font-family:'JetBrains Mono',monospace;font-size:10px;color:#A6ACB6;
+    margin-top:3px;
+  }
+  .sub-rows{display:flex;flex-direction:column;gap:7px;margin-left:38px;}
+  .sub-rows .row-item .idx-box{
+    width:26px;height:34px;background:#fff;font-size:11px;
+  }
+  .sub-rows .row-item input{padding:7px 9px;font-size:13px;}
+
+  .add-brg-wrap{margin-top:6px;}
+
+  /* PLAN FOOTER */
+  .plan-footer{
+    display:flex;justify-content:flex-end;padding:12px 18px;
+    border-top:1px dashed var(--line);
+  }
+
+  /* NEW PLAN CTA */
+  .add-plan-wrap{
+    margin-top:24px;display:flex;justify-content:center;
+  }
+  .btn-add-plan{
+    background:var(--navy);color:#fff;padding:12px 22px;font-size:13px;
+    letter-spacing:0.04em;text-transform:uppercase;font-family:'Oswald',sans-serif;font-weight:600;
+    border-radius:3px;
+  }
+  .btn-add-plan:hover{background:var(--amber);color:var(--navy);}
+
+  /* PREVIEW */
+  details.preview{margin-top:26px;}
+  details.preview summary{
+    cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:12px;
+    color:var(--ink-soft);letter-spacing:0.03em;
+  }
+  details.preview pre{
+    background:var(--navy);color:#E8ECF3;padding:14px;border-radius:4px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;overflow-x:auto;margin-top:10px;
+    line-height:1.5;
+  }
+
+  @media (max-width:560px){
+    .sub-rows{margin-left:20px;}
+    .masthead{flex-direction:column;align-items:flex-start;gap:6px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div>
+      <h1>Rencana Stuffing</h1>
+      <div class="sub">TAC SYSTEM · WH FINISH GOODS</div>
+    </div>
+    <div class="tag" id="planCount">1 RENCANA</div>
+  </div>
+
+  <div id="plans"></div>
+
+  <div class="add-plan-wrap">
+    <button class="btn btn-add-plan" id="addPlanBtn" type="button">+ Tambah Rencana Stuffing</button>
+  </div>
+
+  <details class="preview">
+    <summary>Lihat data (JSON) — untuk sambungan ke Supabase</summary>
+    <pre id="jsonOut">{}</pre>
+  </details>
+
+</div>
+
+<script>
+(function(){
+  const CUSTOMERS = ["PT Maju Jaya","PT Sinar Abadi","CV Nusantara Ceramic","PT Global Tile","Export Buyer A","Export Buyer B"];
+  let planSeq = 0;
+  let plans = [];
+
+  function uid(prefix){ return prefix + '_' + Math.random().toString(36).slice(2,9); }
+
+  function newPlan(){
+    planSeq++;
+    return {
+      id: uid('plan'),
+      seq: planSeq,
+      customer: '',
+      invoice: '',
+      tanggal: '',
+      totalPL: '',
+      parsial: false,
+      finish: false,
+      motifRows: [ { motif:'', area:'' } ],
+      brgGroups: [ { brgDi:'', items:[ { value:'' } ] } ]
+    };
+  }
+
+  function render(){
+    const container = document.getElementById('plans');
+    container.innerHTML = '';
+    plans.forEach((plan, i) => container.appendChild(renderPlanCard(plan, i)));
+    document.getElementById('planCount').textContent = plans.length + (plans.length>1 ? ' RENCANA' : ' RENCANA');
+    updateJson();
+  }
+
+  function updateJson(){
+    document.getElementById('jsonOut').textContent = JSON.stringify(plans, null, 2);
+  }
+
+  function el(tag, cls, html){
+    const e = document.createElement(tag);
+    if(cls) e.className = cls;
+    if(html !== undefined) e.innerHTML = html;
+    return e;
+  }
+
+  function renderPlanCard(plan, index){
+    const card = el('div','plan');
+
+    // HEAD
+    const head = el('div','plan-head');
+    head.appendChild(el('div','plan-index', 'RENCANA #' + String(index+1).padStart(2,'0')));
+    if(plans.length > 1){
+      const rm = el('button','btn btn-danger-text','Hapus rencana ini');
+      rm.type='button';
+      rm.onclick = () => { plans = plans.filter(p=>p.id!==plan.id); render(); };
+      head.appendChild(rm);
+    }
+    card.appendChild(head);
+
+    const body = el('div','plan-body');
+
+    // ROW 1: Customer, Invoice
+    const r1 = el('div','field-row');
+    const fCust = el('div','field');
+    fCust.appendChild(el('label',null,'Customer'));
+    const selCust = document.createElement('select');
+    selCust.appendChild(el('option',null,'— Pilih Customer —'));
+    CUSTOMERS.forEach(c=>{
+      const o = el('option',null,c);
+      if(plan.customer===c) o.selected = true;
+      selCust.appendChild(o);
+    });
+    selCust.onchange = e => { plan.customer = e.target.value; updateJson(); };
+    fCust.appendChild(selCust);
+    r1.appendChild(fCust);
+
+    const fInv = el('div','field');
+    fInv.appendChild(el('label',null,'Invoice'));
+    const inInv = document.createElement('input');
+    inInv.type='text'; inInv.placeholder='No. Invoice (manual)'; inInv.value=plan.invoice;
+    inInv.oninput = e => { plan.invoice = e.target.value; updateJson(); };
+    fInv.appendChild(inInv);
+    r1.appendChild(fInv);
+    body.appendChild(r1);
+
+    // ROW 2: tanggal
+    const r2 = el('div','field-row');
+    const fTgl = el('div','field');
+    fTgl.appendChild(el('label',null,'Rencana Stufing Tgl'));
+    const inTgl = document.createElement('input');
+    inTgl.type='date'; inTgl.value=plan.tanggal;
+    inTgl.onchange = e => { plan.tanggal = e.target.value; updateJson(); };
+    fTgl.appendChild(inTgl);
+    r2.appendChild(fTgl);
+    body.appendChild(r2);
+
+    // ROW 3: Total PL container, Parsial
+    const r3 = el('div','field-row');
+    const fPL = el('div','field');
+    fPL.appendChild(el('label',null,'Total PL — Container'));
+    const inPL = document.createElement('input');
+    inPL.type='text'; inPL.placeholder='cth: 4 (manual / angka)'; inPL.value=plan.totalPL;
+    inPL.oninput = e => { plan.totalPL = e.target.value; updateJson(); };
+    fPL.appendChild(inPL);
+    r3.appendChild(fPL);
+
+    const fParsial = el('div','field small');
+    fParsial.appendChild(el('label',null,'Parsial'));
+    const cl = el('div','checkline');
+    const cb = document.createElement('input');
+    cb.type='checkbox'; cb.checked = plan.parsial; cb.id = plan.id+'_parsial';
+    cb.onchange = e => { plan.parsial = e.target.checked; updateJson(); };
+    const lb = el('label',null,'Parsial (manual)'); lb.setAttribute('for', cb.id);
+    cl.appendChild(cb); cl.appendChild(lb);
+    fParsial.appendChild(cl);
+    r3.appendChild(fParsial);
+    body.appendChild(r3);
+
+    // FINISH checkbox
+    const finRow = el('div','checkline');
+    const finCb = document.createElement('input');
+    finCb.type='checkbox'; finCb.checked = plan.finish; finCb.id = plan.id+'_finish';
+    finCb.onchange = e => { plan.finish = e.target.checked; updateJson(); };
+    const finLb = el('label',null,'FINISH'); finLb.setAttribute('for', finCb.id);
+    finRow.appendChild(finCb); finRow.appendChild(finLb);
+    body.appendChild(finRow);
+
+    // DIVIDER: Motif / Area
+    body.appendChild(dividerEl('Motif & Area'));
+    const motifRows = el('div','rows');
+    plan.motifRows.forEach((row, ri) => motifRows.appendChild(renderMotifRow(plan, row, ri)));
+    body.appendChild(motifRows);
+    const addMotifBtn = el('button','btn btn-add','+ Tambah Motif / Area');
+    addMotifBtn.type='button';
+    addMotifBtn.onclick = () => { plan.motifRows.push({motif:'',area:''}); render(); };
+    body.appendChild(addMotifBtn);
+
+    // DIVIDER: Area Brg
+    body.appendChild(dividerEl('Area Barang (Contoh: FG07/EXPORT)'));
+    plan.brgGroups.forEach((grp, gi) => body.appendChild(renderBrgGroup(plan, grp, gi)));
+    const addBrgWrap = el('div','add-brg-wrap');
+    const addBrgBtn = el('button','btn btn-add','+ Tambah Area Barang');
+    addBrgBtn.type='button';
+    addBrgBtn.onclick = () => { plan.brgGroups.push({brgDi:'', items:[{value:''}]}); render(); };
+    addBrgWrap.appendChild(addBrgBtn);
+    body.appendChild(addBrgWrap);
+
+    card.appendChild(body);
+
+    const footer = el('div','plan-footer');
+    const statusTxt = el('span', null, plan.finish ? '✓ Selesai' : 'Dalam proses');
+    statusTxt.style.fontSize='12px';
+    statusTxt.style.color = plan.finish ? 'var(--ok)' : 'var(--ink-soft)';
+    statusTxt.style.fontFamily = "'JetBrains Mono', monospace";
+    footer.appendChild(statusTxt);
+    card.appendChild(footer);
+
+    return card;
+  }
+
+  function dividerEl(text){
+    const d = el('div','divider');
+    d.appendChild(el('span','lbl', text));
+    d.appendChild(el('span','rule'));
+    return d;
+  }
+
+  function renderMotifRow(plan, row, ri){
+    const wrap = el('div','row-item');
+    wrap.appendChild(el('div','idx-box', '#'+(ri+1)));
+    const inMotif = document.createElement('input');
+    inMotif.type='text'; inMotif.placeholder='Motif'; inMotif.value=row.motif;
+    inMotif.oninput = e => { row.motif = e.target.value; updateJson(); };
+    wrap.appendChild(inMotif);
+    const inArea = document.createElement('input');
+    inArea.type='text'; inArea.placeholder='Area (manual)'; inArea.value=row.area;
+    inArea.oninput = e => { row.area = e.target.value; updateJson(); };
+    wrap.appendChild(inArea);
+    if(plan.motifRows.length > 1){
+      const rm = el('button','btn btn-icon rm-btn','✕');
+      rm.type='button';
+      rm.title='Hapus baris';
+      rm.onclick = () => { plan.motifRows.splice(ri,1); render(); };
+      wrap.appendChild(rm);
+    }
+    return wrap;
+  }
+
+  function renderBrgGroup(plan, grp, gi){
+    const g = el('div','brg-group');
+    const head = el('div','brg-head');
+    head.appendChild(el('div','idx-box', String(gi+1)+'.'));
+    const inBrg = document.createElement('input');
+    inBrg.type='text'; inBrg.placeholder='Brg di .... (cth: FG07/EXPORT)'; inBrg.value=grp.brgDi;
+    inBrg.oninput = e => { grp.brgDi = e.target.value; updateJson(); };
+    head.appendChild(inBrg);
+    if(plan.brgGroups.length > 1){
+      const rm = el('button','btn btn-icon','✕');
+      rm.type='button'; rm.title='Hapus area barang';
+      rm.onclick = () => { plan.brgGroups.splice(gi,1); render(); };
+      head.appendChild(rm);
+    }
+    g.appendChild(head);
+
+    const subRows = el('div','sub-rows');
+    grp.items.forEach((item, ii) => {
+      const row = el('div','row-item');
+      row.appendChild(el('div','idx-box','#'+(ii+1)));
+      const inV = document.createElement('input');
+      inV.type='text'; inV.placeholder='......... (motif/manual)'; inV.value=item.value;
+      inV.oninput = e => { item.value = e.target.value; updateJson(); };
+      row.appendChild(inV);
+      if(grp.items.length > 1){
+        const rm = el('button','btn btn-icon rm-btn','✕');
+        rm.type='button'; rm.title='Hapus item';
+        rm.onclick = () => { grp.items.splice(ii,1); render(); };
+        row.appendChild(rm);
+      }
+      subRows.appendChild(row);
+    });
+    g.appendChild(subRows);
+
+    const addItemWrap = el('div', null);
+    addItemWrap.style.marginLeft = '38px';
+    addItemWrap.style.marginTop = '8px';
+    const addItemBtn = el('button','btn btn-add','+ Tambah Motif');
+    addItemBtn.type='button';
+    addItemBtn.style.fontSize='12px';
+    addItemBtn.style.padding='6px 12px';
+    addItemBtn.onclick = () => { grp.items.push({value:''}); render(); };
+    addItemWrap.appendChild(addItemBtn);
+    g.appendChild(addItemWrap);
+
+    return g;
+  }
+
+  document.getElementById('addPlanBtn').onclick = () => {
+    plans.push(newPlan());
+    render();
+  };
+
+  // init
+  plans.push(newPlan());
+  render();
+})();
+</script>
+</body>
+</html>
