@@ -226,7 +226,7 @@
 
 <script>
 (function(){
-  const CUSTOMERS = ["APEX", "DADIDA", "DECOARTS", "FA", "MAURITIUS", "FINECERA", "FINECERA", "FLORINE", "HOSM", "JANGLUNG", "JONQUIL", "JUBIN", "LAYSHOP", "MEYYAFUSHI", "MFTRESOURCES", "MUNIENTERPRISE", "SUPERGRES", "TOPCERA", "W.K"]
+  const CUSTOMERS = ["PT Maju Jaya","PT Sinar Abadi","CV Nusantara Ceramic","PT Global Tile","Export Buyer A","Export Buyer B"];
   let planSeq = 0;
   let plans = [];
 
@@ -241,20 +241,11 @@
       invoice: '',
       tanggal: '',
       totalPL: '',
-      finish: false,
       motifRows: [ { motif:'', area:'' } ],
       brgGroups: [ { brgDi:'', items:[ { value:'' } ] } ]
     };
   }
-  // ROW 3: Total PL container, Parsial
-    const r3 = el('div','field-row');
-    const fPL = el('div','field');
-    fPL.appendChild(el('label',null,'Total PL — Container'));
-    const inPL = document.createElement('input');
-    inPL.type='text'; inPL.placeholder='cth: 4 (manual / angka)'; inPL.value=plan.totalPL;
-    inPL.oninput = e => { plan.totalPL = e.target.value; updateJson(); };
-    fPL.appendChild(inPL);
-    r3.appendChild(fPL);
+
   function render(){
     const container = document.getElementById('plans');
     container.innerHTML = '';
@@ -334,19 +325,10 @@
     inPL.oninput = e => { plan.totalPL = e.target.value; updateJson(); };
     fPL.appendChild(inPL);
     r3.appendChild(fPL);
+    body.appendChild(r3);
 
-
-    // FINISH checkbox
-    const finRow = el('div','checkline');
-    const finCb = document.createElement('input');
-    finCb.type='checkbox'; finCb.checked = plan.finish; finCb.id = plan.id+'_finish';
-    finCb.onchange = e => { plan.finish = e.target.checked; updateJson(); };
-    const finLb = el('label',null,'FINISH'); finLb.setAttribute('for', finCb.id);
-    finRow.appendChild(finCb); finRow.appendChild(finLb);
-    body.appendChild(finRow);
-
-    // DIVIDER: Motif / Area
-    body.appendChild(dividerEl('Motif & Area'));
+    // DIVIDER: Finish (judul untuk Motif & Area)
+    body.appendChild(dividerEl('Finish — Motif & Area'));
     const motifRows = el('div','rows');
     plan.motifRows.forEach((row, ri) => motifRows.appendChild(renderMotifRow(plan, row, ri)));
     body.appendChild(motifRows);
@@ -366,14 +348,6 @@
     body.appendChild(addBrgWrap);
 
     card.appendChild(body);
-
-    const footer = el('div','plan-footer');
-    const statusTxt = el('span', null, plan.finish ? '✓ Selesai' : 'Dalam proses');
-    statusTxt.style.fontSize='12px';
-    statusTxt.style.color = plan.finish ? 'var(--ok)' : 'var(--ink-soft)';
-    statusTxt.style.fontFamily = "'JetBrains Mono', monospace";
-    footer.appendChild(statusTxt);
-    card.appendChild(footer);
 
     return card;
   }
