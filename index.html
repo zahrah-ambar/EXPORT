@@ -358,10 +358,22 @@
     d.appendChild(el('span','rule'));
     return d;
   }
-
+  
+  function makeNoSelect(value, onChange, variant){
+    const sel = document.createElement('select');
+    sel.className = 'idx-box idx-select' + (variant ? ' '+variant : '');
+    for(let n=1;n<=30;n++){
+      const o = el('option', null, '#'+n);
+      o.value = n;
+      if(Number(value)===n) o.selected = true;
+      sel.appendChild(o);
+    }
+    sel.onchange = e => { onChange(Number(e.target.value)); updateJson(); };
+    return sel;
+}
   function renderMotifRow(plan, row, ri){
     const wrap = el('div','row-item');
-    wrap.appendChild(el('div','idx-box', '#'+(ri+1)));
+    wrap.appendChild(makeNoSelect(row.no || (ri+1), (v)=>{ row.no = v; }));
     const inMotif = document.createElement('input');
     inMotif.type='text'; inMotif.placeholder='Motif'; inMotif.value=row.motif;
     inMotif.oninput = e => { row.motif = e.target.value; updateJson(); };
@@ -399,7 +411,7 @@
     const subRows = el('div','sub-rows');
     grp.items.forEach((item, ii) => {
       const row = el('div','row-item');
-      row.appendChild(el('div','idx-box','#'+(ii+1)));
+      row.appendChild(makeNoSelect(item.no || (ii+1), (v)=>{ item.no = v; }, 'sub'));
       const inV = document.createElement('input');
       inV.type='text'; inV.placeholder='......... (motif/manual)'; inV.value=item.value;
       inV.oninput = e => { item.value = e.target.value; updateJson(); };
