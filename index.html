@@ -241,7 +241,6 @@
       invoice: '',
       tanggal: '',
       totalPL: '',
-      parsial: false,
       finish: false,
       motifRows: [ { motif:'', area:'' } ],
       brgGroups: [ { brgDi:'', items:[ { value:'' } ] } ]
@@ -318,7 +317,7 @@
     r2.appendChild(fTgl);
     body.appendChild(r2);
 
-    // ROW 3: Total PL container, Parsial
+    // ROW 3: Total PL container
     const r3 = el('div','field-row');
     const fPL = el('div','field');
     fPL.appendChild(el('label',null,'Total PL — Container'));
@@ -328,17 +327,6 @@
     fPL.appendChild(inPL);
     r3.appendChild(fPL);
 
-    const fParsial = el('div','field small');
-    fParsial.appendChild(el('label',null,'Parsial'));
-    const cl = el('div','checkline');
-    const cb = document.createElement('input');
-    cb.type='checkbox'; cb.checked = plan.parsial; cb.id = plan.id+'_parsial';
-    cb.onchange = e => { plan.parsial = e.target.checked; updateJson(); };
-    const lb = el('label',null,'Parsial (manual)'); lb.setAttribute('for', cb.id);
-    cl.appendChild(cb); cl.appendChild(lb);
-    fParsial.appendChild(cl);
-    r3.appendChild(fParsial);
-    body.appendChild(r3);
 
     // FINISH checkbox
     const finRow = el('div','checkline');
