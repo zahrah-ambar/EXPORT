@@ -250,7 +250,7 @@
     const container = document.getElementById('plans');
     container.innerHTML = '';
     plans.forEach((plan, i) => container.appendChild(renderPlanCard(plan, i)));
-    document.getElementById('planCount').textContent = plans.length + (plans.length>1 ? ' RENCANA' : ' RENCANA');
+    document.getElementById('planCount').textContent = plans.length + (plans.length>1 ? ' PENGERJAAN' : ' PENGERJAAN');
     updateJson();
   }
 
@@ -270,9 +270,9 @@
 
     // HEAD
     const head = el('div','plan-head');
-    head.appendChild(el('div','plan-index', 'RENCANA #' + String(index+1).padStart(2,'0')));
+    head.appendChild(el('div','plan-index', 'PENGERJAAN #' + String(index+1).padStart(2,'0')));
     if(plans.length > 1){
-      const rm = el('button','btn btn-danger-text','Hapus rencana ini');
+      const rm = el('button','btn btn-danger-text','Hapus pengerjaan ini');
       rm.type='button';
       rm.onclick = () => { plans = plans.filter(p=>p.id!==plan.id); render(); };
       head.appendChild(rm);
