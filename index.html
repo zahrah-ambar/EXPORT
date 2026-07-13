@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EXPORT UPDATE PENGERJAAN</title>
+<title>Rencana Stuffing — TAC System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
@@ -117,6 +117,16 @@
     width:30px;height:38px;display:flex;align-items:center;justify-content:center;
     border-radius:3px;flex-shrink:0;
   }
+  select.idx-select{
+    width:80px;height:38px;text-align:center;text-align-last:center;
+    -moz-text-align-last:center;cursor:pointer;padding:0 8px;
+    appearance:none;-webkit-appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Cpath d='M0 0L4 6L8 0Z' fill='%2316233F'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 8px center;
+  }
+  select.idx-select.sub{
+    width:50px;height:34px;font-size:11px;background:#fff;
+  }
   .row-item input{flex:1;}
   .row-item .rm-btn{flex-shrink:0;}
 
@@ -158,8 +168,8 @@
     margin-top:3px;
   }
   .sub-rows{display:flex;flex-direction:column;gap:7px;margin-left:38px;}
-  .sub-rows .row-item .idx-box{
-    width:26px;height:34px;background:#fff;font-size:11px;
+  .sub-rows select.idx-select.sub{
+    width:70px;height:34px;background:#fff;font-size:11px;padding:0 6px;
   }
   .sub-rows .row-item input{padding:7px 9px;font-size:13px;}
 
@@ -205,16 +215,16 @@
 
   <div class="masthead">
     <div>
-      <h1>FORM UPDATE PENGERJAAN EXPORT</h1>
-      <div class="sub">EXPORT</div>
+      <h1>Rencana Stuffing</h1>
+      <div class="sub">TAC SYSTEM · WH FINISH GOODS</div>
     </div>
-    <div class="tag" id="planCount">1 PENGERJAAN</div>
+    <div class="tag" id="planCount">1 RENCANA</div>
   </div>
 
   <div id="plans"></div>
 
   <div class="add-plan-wrap">
-    <button class="btn btn-add-plan" id="addPlanBtn" type="button">+ Tambah Pengerjaan Export</button>
+    <button class="btn btn-add-plan" id="addPlanBtn" type="button">+ Tambah Rencana Stuffing</button>
   </div>
 
   <details class="preview">
@@ -226,7 +236,7 @@
 
 <script>
 (function(){
-  const CUSTOMERS = ["Apex","Dadida","Deco","FA Home","Finecera","Finecera","florine","hosm","janglung","jonquil","jubin","lay shop","meyyafushi","mft","muni","supergres","topcera","w.k",];
+  const CUSTOMERS = ["PT Maju Jaya","PT Sinar Abadi","CV Nusantara Ceramic","PT Global Tile","Export Buyer A","Export Buyer B"];
   let planSeq = 0;
   let plans = [];
 
@@ -241,8 +251,8 @@
       invoice: '',
       tanggal: '',
       totalPL: '',
-      motifRows: [ { motif:'', area:'' } ],
-      brgGroups: [ { brgDi:'', items:[ { value:'' } ] } ]
+      motifRows: [ { no:1, motif:'', area:'' } ],
+      brgGroups: [ { brgDi:'', items:[ { no:1, value:'' } ] } ]
     };
   }
 
@@ -250,7 +260,7 @@
     const container = document.getElementById('plans');
     container.innerHTML = '';
     plans.forEach((plan, i) => container.appendChild(renderPlanCard(plan, i)));
-    document.getElementById('planCount').textContent = plans.length + (plans.length>1 ? ' PENGERJAAN' : ' PENGERJAAN');
+    document.getElementById('planCount').textContent = plans.length + (plans.length>1 ? ' RENCANA' : ' RENCANA');
     updateJson();
   }
 
@@ -265,14 +275,27 @@
     return e;
   }
 
+  function makeNoSelect(value, onChange, variant){
+    const sel = document.createElement('select');
+    sel.className = 'idx-box idx-select' + (variant ? ' '+variant : '');
+    for(let n=1;n<=30;n++){
+      const o = el('option', null, '#'+n);
+      o.value = n;
+      if(Number(value)===n) o.selected = true;
+      sel.appendChild(o);
+    }
+    sel.onchange = e => { onChange(Number(e.target.value)); updateJson(); };
+    return sel;
+  }
+
   function renderPlanCard(plan, index){
     const card = el('div','plan');
 
     // HEAD
     const head = el('div','plan-head');
-    head.appendChild(el('div','plan-index', 'PENGERJAAN #' + String(index+1).padStart(2,'0')));
+    head.appendChild(el('div','plan-index', 'RENCANA #' + String(index+1).padStart(2,'0')));
     if(plans.length > 1){
-      const rm = el('button','btn btn-danger-text','Hapus pengerjaan ini');
+      const rm = el('button','btn btn-danger-text','Hapus rencana ini');
       rm.type='button';
       rm.onclick = () => { plans = plans.filter(p=>p.id!==plan.id); render(); };
       head.appendChild(rm);
@@ -334,7 +357,7 @@
     body.appendChild(motifRows);
     const addMotifBtn = el('button','btn btn-add','+ Tambah Motif / Area');
     addMotifBtn.type='button';
-    addMotifBtn.onclick = () => { plan.motifRows.push({motif:'',area:''}); render(); };
+    addMotifBtn.onclick = () => { plan.motifRows.push({no:Math.min(plan.motifRows.length+1,30),motif:'',area:''}); render(); };
     body.appendChild(addMotifBtn);
 
     // DIVIDER: Area Brg
@@ -358,19 +381,7 @@
     d.appendChild(el('span','rule'));
     return d;
   }
-  
-  function makeNoSelect(value, onChange, variant){
-    const sel = document.createElement('select');
-    sel.className = 'idx-box idx-select' + (variant ? ' '+variant : '');
-    for(let n=1;n<=30;n++){
-      const o = el('option', null, '#'+n);
-      o.value = n;
-      if(Number(value)===n) o.selected = true;
-      sel.appendChild(o);
-    }
-    sel.onchange = e => { onChange(Number(e.target.value)); updateJson(); };
-    return sel;
-}
+
   function renderMotifRow(plan, row, ri){
     const wrap = el('div','row-item');
     wrap.appendChild(makeNoSelect(row.no || (ri+1), (v)=>{ row.no = v; }));
@@ -433,7 +444,7 @@
     addItemBtn.type='button';
     addItemBtn.style.fontSize='12px';
     addItemBtn.style.padding='6px 12px';
-    addItemBtn.onclick = () => { grp.items.push({value:''}); render(); };
+    addItemBtn.onclick = () => { grp.items.push({no:Math.min(grp.items.length+1,30),value:''}); render(); };
     addItemWrap.appendChild(addItemBtn);
     g.appendChild(addItemWrap);
 
