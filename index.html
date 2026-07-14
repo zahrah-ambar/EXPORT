@@ -264,13 +264,13 @@
       <h1>FORM EXPORT</h1>
       <div class="sub">· WH FINISH GOODS</div>
     </div>
-    <div class="tag" id="planCount">1 RENCANA</div>
+    <div class="tag" id="planCount">1 PENGERJAAN</div>
   </div>
 
   <div id="plans"></div>
 
   <div class="add-plan-wrap">
-    <button class="btn btn-add-plan" id="addPlanBtn" type="button">+ Tambah Rencana Stuffing</button>
+    <button class="btn btn-add-plan" id="addPlanBtn" type="button">+ Tambah Pengerjaan</button>
   </div>
 
   <details class="preview">
@@ -285,7 +285,7 @@
 
   <div class="history">
     <div class="history-head">
-      <h2>Riwayat Rencana Stuffing</h2>
+      <h2>Riwayat Pengerjaan</h2>
       <button class="btn btn-refresh" id="refreshBtn" type="button">↻ Tarik Data Terbaru</button>
     </div>
     <div id="historyWrap"><div class="hist-empty">Memuat data...</div></div>
@@ -328,7 +328,7 @@
     const container = document.getElementById('plans');
     container.innerHTML = '';
     plans.forEach((plan, i) => container.appendChild(renderPlanCard(plan, i)));
-    document.getElementById('planCount').textContent = plans.length + (plans.length>1 ? ' RENCANA' : ' RENCANA');
+    document.getElementById('planCount').textContent = plans.length + (plans.length>1 ? ' PENGERJAAN' : ' PENGERJAAN');
     updateJson();
   }
 
@@ -361,9 +361,9 @@
 
     // HEAD
     const head = el('div','plan-head');
-    head.appendChild(el('div','plan-index', 'RENCANA #' + String(index+1).padStart(2,'0')));
+    head.appendChild(el('div','plan-index', 'PENGERJAAN #' + String(index+1).padStart(2,'0')));
     if(plans.length > 1){
-      const rm = el('button','btn btn-danger-text','Hapus rencana ini');
+      const rm = el('button','btn btn-danger-text','Hapus Pengerjaan ini');
       rm.type='button';
       rm.onclick = () => { plans = plans.filter(p=>p.id!==plan.id); render(); };
       head.appendChild(rm);
@@ -399,7 +399,7 @@
     // ROW 2: tanggal
     const r2 = el('div','field-row');
     const fTgl = el('div','field');
-    fTgl.appendChild(el('label',null,'Rencana Stufing Tgl'));
+    fTgl.appendChild(el('label',null,'Pengerjaan Stufing Tgl'));
     const inTgl = document.createElement('input');
     inTgl.type='date'; inTgl.value=plan.tanggal;
     inTgl.onchange = e => { plan.tanggal = e.target.value; updateJson(); };
@@ -519,7 +519,7 @@
     return g;
   }
 
-  // ==== SUBMIT: kirim semua rencana ke Supabase ====
+  // ==== SUBMIT: kirim semua pengerjaan ke Supabase ====
   function planToRow(plan){
     return {
       customer: plan.customer,
@@ -537,7 +537,7 @@
 
     const invalid = plans.some(p => !p.customer || !p.tanggal);
     if(invalid){
-      statusEl.textContent = 'Gagal: Customer & Tanggal wajib diisi di semua rencana.';
+      statusEl.textContent = 'Gagal: Customer & Tanggal wajib diisi di semua pengerjaan.';
       statusEl.className = 'err';
       return;
     }
@@ -551,7 +551,7 @@
       const { data, error } = await supabaseClient.from(TABLE_NAME).insert(rows).select();
       if(error) throw error;
 
-      statusEl.textContent = 'Berhasil disimpan (' + data.length + ' rencana).';
+      statusEl.textContent = 'Berhasil disimpan (' + data.length + ' pengerjaan).';
       statusEl.className = 'ok';
 
       // reset form setelah sukses
@@ -586,7 +586,7 @@
   function renderHistory(rows){
     const wrap = document.getElementById('historyWrap');
     if(!rows.length){
-      wrap.innerHTML = '<div class="hist-empty">Belum ada data rencana stuffing.</div>';
+      wrap.innerHTML = '<div class="hist-empty">Belum ada data Pengerjaan.</div>';
       return;
     }
     const table = document.createElement('table');
