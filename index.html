@@ -6,6 +6,7 @@
 <title>EXPOR</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --ink:#1F2430;
@@ -204,9 +205,54 @@
     line-height:1.5;
   }
 
+  /* SUBMIT BAR */
+  .submit-bar{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    margin-top:26px;padding:16px 18px;background:var(--card);
+    border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:0 1px 2px rgba(20,25,40,0.04);
+  }
+  .btn-submit{
+    background:var(--ok);color:#fff;padding:11px 22px;font-size:13px;
+    letter-spacing:0.03em;text-transform:uppercase;font-family:'Oswald',sans-serif;font-weight:600;
+    border-radius:3px;
+  }
+  .btn-submit:hover{background:#256640;}
+  .btn-submit:disabled{background:#A6ACB6;cursor:not-allowed;}
+  #statusMsg{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);}
+  #statusMsg.ok{color:var(--ok);}
+  #statusMsg.err{color:var(--danger);}
+
+  /* HISTORY / TARIK DATA */
+  .history{margin-top:30px;}
+  .history-head{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .history-head h2{
+    font-family:'Oswald',sans-serif;font-size:15px;letter-spacing:0.05em;
+    text-transform:uppercase;color:var(--navy);margin:0;
+  }
+  .btn-refresh{background:#fff;border:1px solid var(--line);color:var(--ink);font-size:12px;padding:7px 12px;}
+  .btn-refresh:hover{border-color:var(--navy);}
+  .hist-table{
+    width:100%;border-collapse:collapse;background:var(--card);
+    border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+    font-size:13px;
+  }
+  .hist-table th{
+    background:var(--navy);color:#fff;text-align:left;padding:9px 10px;
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.03em;text-transform:uppercase;
+  }
+  .hist-table td{padding:9px 10px;border-top:1px solid var(--line-soft);vertical-align:top;}
+  .hist-table tr:hover td{background:var(--amber-soft);}
+  .hist-empty{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);padding:14px;text-align:center;border:1px dashed var(--line);border-radius:var(--radius);}
+
   @media (max-width:560px){
     .sub-rows{margin-left:20px;}
     .masthead{flex-direction:column;align-items:flex-start;gap:6px;}
+    .submit-bar{flex-direction:column;align-items:stretch;}
+    .hist-table{font-size:12px;}
   }
 </style>
 </head>
@@ -228,15 +274,37 @@
   </div>
 
   <details class="preview">
-    <summary>Lihat data (JSON) — untuk sambungan ke Supabase</summary>
+    <summary>Lihat data (JSON) — sebelum dikirim ke Supabase</summary>
     <pre id="jsonOut">{}</pre>
   </details>
+
+  <div class="submit-bar">
+    <span id="statusMsg">Belum dikirim.</span>
+    <button class="btn btn-submit" id="submitBtn" type="button">Submit ke Supabase</button>
+  </div>
+
+  <div class="history">
+    <div class="history-head">
+      <h2>Riwayat Rencana Stuffing</h2>
+      <button class="btn btn-refresh" id="refreshBtn" type="button">↻ Tarik Data Terbaru</button>
+    </div>
+    <div id="historyWrap"><div class="hist-empty">Memuat data...</div></div>
+  </div>
 
 </div>
 
 <script>
 (function(){
   const CUSTOMERS = ["APEX","DADIDA","DECOARTS","FA HOME","FINECERA", "FLORINE", "HOSM", "JANG LUNG", "JONQOIL", "JUBIN", "LAY SHOP"];
+
+  // ==== KONFIGURASI SUPABASE ====
+  // Ganti SUPABASE_ANON_KEY dengan anon/public key project kamu (Project Settings > API).
+  // URL sudah diarahkan ke project ref TAC System: addgggshvsvnzbzdbgnq
+  const SUPABASE_URL = 'https://addgggshvsvnzbzdbgnq.supabase.co';
+  const SUPABASE_ANON_KEY = 'GANTI_DENGAN_ANON_KEY_ANDA';
+  const TABLE_NAME = 'rencana_stuffing';
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
   let planSeq = 0;
   let plans = [];
 
@@ -451,14 +519,112 @@
     return g;
   }
 
+  // ==== SUBMIT: kirim semua rencana ke Supabase ====
+  function planToRow(plan){
+    return {
+      customer: plan.customer,
+      invoice: plan.invoice,
+      tanggal: plan.tanggal || null,
+      total_pl: plan.totalPL,
+      motif_rows: plan.motifRows,
+      brg_groups: plan.brgGroups
+    };
+  }
+
+  async function submitToSupabase(){
+    const statusEl = document.getElementById('statusMsg');
+    const btn = document.getElementById('submitBtn');
+
+    const invalid = plans.some(p => !p.customer || !p.tanggal);
+    if(invalid){
+      statusEl.textContent = 'Gagal: Customer & Tanggal wajib diisi di semua rencana.';
+      statusEl.className = 'err';
+      return;
+    }
+
+    btn.disabled = true;
+    statusEl.textContent = 'Mengirim data...';
+    statusEl.className = '';
+
+    try{
+      const rows = plans.map(planToRow);
+      const { data, error } = await supabaseClient.from(TABLE_NAME).insert(rows).select();
+      if(error) throw error;
+
+      statusEl.textContent = 'Berhasil disimpan (' + data.length + ' rencana).';
+      statusEl.className = 'ok';
+
+      // reset form setelah sukses
+      plans = [newPlan()];
+      render();
+      loadHistory();
+    }catch(err){
+      statusEl.textContent = 'Gagal: ' + (err.message || err);
+      statusEl.className = 'err';
+    }finally{
+      btn.disabled = false;
+    }
+  }
+
+  // ==== TARIK DATA: ambil riwayat dari Supabase ====
+  async function loadHistory(){
+    const wrap = document.getElementById('historyWrap');
+    wrap.innerHTML = '<div class="hist-empty">Memuat data...</div>';
+    try{
+      const { data, error } = await supabaseClient
+        .from(TABLE_NAME)
+        .select('*')
+        .order('created_at', { ascending:false })
+        .limit(50);
+      if(error) throw error;
+      renderHistory(data || []);
+    }catch(err){
+      wrap.innerHTML = '<div class="hist-empty">Gagal memuat data: ' + (err.message || err) + '</div>';
+    }
+  }
+
+  function renderHistory(rows){
+    const wrap = document.getElementById('historyWrap');
+    if(!rows.length){
+      wrap.innerHTML = '<div class="hist-empty">Belum ada data rencana stuffing.</div>';
+      return;
+    }
+    const table = document.createElement('table');
+    table.className = 'hist-table';
+    table.innerHTML = '<thead><tr>' +
+      '<th>Tanggal</th><th>Customer</th><th>Invoice</th><th>Total PL</th><th>Motif/Area</th><th>Area Barang</th>' +
+      '</tr></thead>';
+    const tbody = document.createElement('tbody');
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      const motifSummary = (r.motif_rows||[]).map(m => [m.motif,m.area].filter(Boolean).join(' / ')).filter(Boolean).join(', ');
+      const brgSummary = (r.brg_groups||[]).map(g => g.brgDi).filter(Boolean).join(', ');
+      tr.innerHTML =
+        '<td>' + (r.tanggal || '-') + '</td>' +
+        '<td>' + (r.customer || '-') + '</td>' +
+        '<td>' + (r.invoice || '-') + '</td>' +
+        '<td>' + (r.total_pl || '-') + '</td>' +
+        '<td>' + (motifSummary || '-') + '</td>' +
+        '<td>' + (brgSummary || '-') + '</td>';
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrap.innerHTML = '';
+    wrap.appendChild(table);
+  }
+
   document.getElementById('addPlanBtn').onclick = () => {
     plans.push(newPlan());
     render();
   };
 
+  document.getElementById('submitBtn').onclick = submitToSupabase;
+  document.getElementById('refreshBtn').onclick = loadHistory;
+
   // init
   plans.push(newPlan());
   render();
+  loadHistory();
 })();
 </script>
 </body>
