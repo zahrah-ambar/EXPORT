@@ -248,6 +248,17 @@
   .hist-table tr:hover td{background:var(--amber-soft);}
   .hist-empty{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);padding:14px;text-align:center;border:1px dashed var(--line);border-radius:var(--radius);}
 
+  .hist-table th.th-aksi{width:46px;text-align:center;}
+  .hist-table td.td-aksi{text-align:center;padding:6px;}
+  .btn-wa-share{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:32px;height:32px;border-radius:6px;border:none;
+    background:#25D366;color:#fff;cursor:pointer;font-size:15px;line-height:1;
+    transition:opacity .15s,transform .1s;
+  }
+  .btn-wa-share:hover{opacity:.85;}
+  .btn-wa-share:active{transform:scale(.94);}
+
   @media (max-width:560px){
     .sub-rows{margin-left:20px;}
     .masthead{flex-direction:column;align-items:flex-start;gap:6px;}
@@ -592,7 +603,7 @@
     const table = document.createElement('table');
     table.className = 'hist-table';
     table.innerHTML = '<thead><tr>' +
-      '<th>Tanggal</th><th>Customer</th><th>Invoice</th><th>Total PL</th><th>Motif/Area</th><th>Area Barang</th>' +
+      '<th>Tanggal</th><th>Customer</th><th>Invoice</th><th>Total PL</th><th>Motif/Area</th><th>Area Barang</th><th class="th-aksi">Aksi</th>' +
       '</tr></thead>';
     const tbody = document.createElement('tbody');
     rows.forEach(r => {
@@ -605,12 +616,49 @@
         '<td>' + (r.invoice || '-') + '</td>' +
         '<td>' + (r.total_pl || '-') + '</td>' +
         '<td>' + (motifSummary || '-') + '</td>' +
-        '<td>' + (brgSummary || '-') + '</td>';
+        '<td>' + (brgSummary || '-') + '</td>' +
+        '<td class="td-aksi"></td>';
+      const tdAksi = tr.querySelector('.td-aksi');
+      const waBtn = document.createElement('button');
+      waBtn.type = 'button';
+      waBtn.className = 'btn-wa-share';
+      waBtn.title = 'Share laporan ini ke WhatsApp';
+      waBtn.innerHTML = '💬';
+      waBtn.addEventListener('click', () => shareHistoryToWA(r));
+      tdAksi.appendChild(waBtn);
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
     wrap.innerHTML = '';
     wrap.appendChild(table);
+  }
+
+  function buildHistoryWaText(r){
+    const motifSummary = (r.motif_rows||[])
+      .map(m => [m.motif, m.area].filter(Boolean).join(' / '))
+      .filter(Boolean).join('\n  ');
+    const brgSummary = (r.brg_groups||[])
+      .map(g => g.brgDi).filter(Boolean).join('\n  ');
+    const lines = [
+      '*LAPORAN PENGERJAAN — FORM EXPORT*',
+      '━━━━━━━━━━━━━━━━━━━━',
+      '*Tanggal   :* ' + (r.tanggal || '-'),
+      '*Customer  :* ' + (r.customer || '-'),
+      '*Invoice   :* ' + (r.invoice || '-'),
+      '*Total PL  :* ' + (r.total_pl || '-'),
+      '',
+      '*Motif / Area:*',
+      '  ' + (motifSummary || '-'),
+      '',
+      '*Area Barang:*',
+      '  ' + (brgSummary || '-')
+    ];
+    return lines.join('\n');
+  }
+
+  function shareHistoryToWA(r){
+    const text = buildHistoryWaText(r);
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
   }
 
   document.getElementById('addPlanBtn').onclick = () => {
