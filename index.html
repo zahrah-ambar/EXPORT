@@ -230,6 +230,12 @@
   #statusMsg{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);}
   #statusMsg.ok{color:var(--ok);}
   #statusMsg.err{color:var(--danger);}
+  .btn-wa {
+    background: #25D366; color: #fff; padding: 11px 22px; font-size: 13px;
+    letter-spacing: 0.03em; text-transform: uppercase; font-family: 'Oswald', sans-serif; 
+    font-weight: 600; border-radius: 3px;
+  }
+  .btn-wa:hover { background: #1EBE55; }
 
   /* HISTORY / TARIK DATA */
   .history{margin-top:30px;}
@@ -314,7 +320,10 @@
 
   <div class="submit-bar">
     <span id="statusMsg">Belum dikirim.</span>
-    <button class="btn btn-submit" id="submitBtn" type="button">Submit</button>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-wa" id="shareWaGlobalBtn" type="button">💬 Bagikan Semua ke WA</button>
+      <button class="btn btn-submit" id="submitBtn" type="button">Submit</button>
+    </div>
   </div>
 
   <div class="history">
@@ -712,7 +721,55 @@ function buildHistoryWaText(r){
 
   document.getElementById('submitBtn').onclick = submitToSupabase;
   document.getElementById('refreshBtn').onclick = loadHistory;
+  // ==== SHARE SEMUA PENGERJAAN KE WA SEKALIGUS ====
+  function shareAllToWA() {
+    const shiftGlobal = document.getElementById('globalShift').value || '1';
+    const tglGlobal = document.getElementById('globalTanggal').value;
+    
+    const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+    const months = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
 
+    // Tanggal Global Header
+    const repDate = tglGlobal ? new Date(tglGlobal) : new Date();
+    const repStr = isNaN(repDate) ? (tglGlobal || '-') : `${days[repDate.getDay()]}, ${repDate.getDate()} ${months[repDate.getMonth()]} ${repDate.getFullYear()}`;
+
+    // Header Utama
+    const lines = [
+      `*REPORT UPDATE PENGERJAAN EXPORT SHIFT ${shiftGlobal}*`,
+      repStr
+    ];
+
+    // Looping semua pengerjaan (Card)
+    plans.forEach(p => {
+      lines.push(''); // Baris pemisah antar pengerjaan
+      lines.push(`✅ *${p.customer || '-'} INV ${p.invoice || '-'}*`);
+      
+      const stufingStr = p.tanggal ? p.tanggal.toUpperCase() : '-';
+      lines.push(`RENCANA STUFING ${stufingStr}`);
+      lines.push(`TOTAL PL ${p.totalPL || '-'}`);
+      lines.push('*FINISH*');
+
+      (p.motifRows || []).forEach(m => {
+        const text = [m.motif, m.area].filter(Boolean).join(' ');
+        lines.push(`#${m.no} ${text}`);
+      });
+
+      (p.brgGroups || []).forEach(g => {
+        lines.push(''); 
+        lines.push(`*BARANG DI AREA ${g.brgDi ? g.brgDi.toUpperCase() : '-'}*`);
+        (g.items || []).forEach(item => {
+          lines.push(`#${item.no} ${item.value}`);
+        });
+      });
+    });
+
+    // Buka tab WhatsApp
+    const text = lines.join('\n');
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+  }
+
+  // Daftarkan event klik untuk tombol baru
+  document.getElementById('shareWaGlobalBtn').onclick = shareAllToWA;
   // init
   plans.push(newPlan());
   render();
