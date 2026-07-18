@@ -429,13 +429,15 @@
     r1.appendChild(fInv);
     body.appendChild(r1);
 
-    // ROW 2: tanggal
+    // ROW 2: tanggal (MANUAL)
     const r2 = el('div','field-row');
     const fTgl = el('div','field');
-    fTgl.appendChild(el('label',null,'Pengerjaan Stufing Tgl'));
+    fTgl.appendChild(el('label',null,'Pengerjaan Stufing (Manual)'));
     const inTgl = document.createElement('input');
-    inTgl.type='date'; inTgl.value=plan.tanggal;
-    inTgl.onchange = e => { plan.tanggal = e.target.value; updateJson(); };
+    inTgl.type = 'text'; 
+    inTgl.placeholder = 'cth: 8 JULI'; 
+    inTgl.value = plan.tanggal;
+    inTgl.oninput = e => { plan.tanggal = e.target.value; updateJson(); };
     fTgl.appendChild(inTgl);
     r2.appendChild(fTgl);
     body.appendChild(r2);
@@ -660,17 +662,16 @@
     wrap.appendChild(table);
   }
 
-  function buildHistoryWaText(r){
+function buildHistoryWaText(r){
     const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
     const months = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
 
-    // Tanggal Laporan Global (Dari Input Luar)
+    // Tanggal Laporan Global (Tetap otomatis)
     const repDate = r.tanggal_laporan ? new Date(r.tanggal_laporan) : new Date();
     const repStr = isNaN(repDate) ? (r.tanggal_laporan || '-') : `${days[repDate.getDay()]}, ${repDate.getDate()} ${months[repDate.getMonth()]} ${repDate.getFullYear()}`;
 
-    // Tanggal Rencana Stufing (Dari dalam Card)
-    const stufingDate = new Date(r.tanggal);
-    const stufingStr = isNaN(stufingDate) ? (r.tanggal || '-') : `${stufingDate.getDate()} ${months[stufingDate.getMonth()]}`;
+    // Tanggal Rencana Stufing (Langsung ambil teks manualnya)
+    const stufingStr = r.tanggal ? r.tanggal.toUpperCase() : '-';
 
     const shift = r.shift || '1';
 
@@ -699,7 +700,6 @@
 
     return lines.join('\n');
   }
-
   function shareHistoryToWA(r){
     const text = buildHistoryWaText(r);
     window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
