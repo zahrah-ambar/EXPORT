@@ -675,13 +675,10 @@ function buildHistoryWaText(r){
     const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
     const months = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
 
-    // Tanggal Laporan Global (Tetap otomatis)
     const repDate = r.tanggal_laporan ? new Date(r.tanggal_laporan) : new Date();
     const repStr = isNaN(repDate) ? (r.tanggal_laporan || '-') : `${days[repDate.getDay()]}, ${repDate.getDate()} ${months[repDate.getMonth()]} ${repDate.getFullYear()}`;
 
-    // Tanggal Rencana Stufing (Langsung ambil teks manualnya)
     const stufingStr = r.tanggal ? r.tanggal.toUpperCase() : '-';
-
     const shift = r.shift || '1';
 
     const lines = [
@@ -694,17 +691,30 @@ function buildHistoryWaText(r){
       '*FINISH*'
     ];
 
+    // Cek Motif / Area (Finish)
     (r.motif_rows || []).forEach(m => {
       const text = [m.motif, m.area].filter(Boolean).join(' ');
-      lines.push(`#${m.no} ${text}`);
+      if (text.trim() !== '') { // Hanya cetak jika ada isinya
+        lines.push(`#${m.no} ${text}`);
+      }
     });
 
+    // Cek Area Barang
     (r.brg_groups || []).forEach(g => {
-      lines.push(''); 
-      lines.push(`*BARANG DI AREA ${g.brgDi ? g.brgDi.toUpperCase() : '-'}*`);
-      (g.items || []).forEach(item => {
-        lines.push(`#${item.no} ${item.value}`);
-      });
+      const isAreaFilled = g.brgDi && g.brgDi.trim() !== '';
+      const hasItemFilled = g.items && g.items.some(item => item.value && item.value.trim() !== '');
+      
+      // Tampilkan judul Area jika nama Area-nya diisi ATAU itemnya ada yang diisi
+      if (isAreaFilled || hasItemFilled) {
+        lines.push(''); 
+        lines.push(`*BARANG DI AREA ${isAreaFilled ? g.brgDi.toUpperCase() : '-'}*`);
+        
+        (g.items || []).forEach(item => {
+          if (item.value && item.value.trim() !== '') { // Abaikan jika kosong
+            lines.push(`#${item.no} ${item.value}`);
+          }
+        });
+      }
     });
 
     return lines.join('\n');
@@ -729,19 +739,16 @@ function buildHistoryWaText(r){
     const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
     const months = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
 
-    // Tanggal Global Header
     const repDate = tglGlobal ? new Date(tglGlobal) : new Date();
     const repStr = isNaN(repDate) ? (tglGlobal || '-') : `${days[repDate.getDay()]}, ${repDate.getDate()} ${months[repDate.getMonth()]} ${repDate.getFullYear()}`;
 
-    // Header Utama
     const lines = [
       `*REPORT UPDATE PENGERJAAN EXPORT SHIFT ${shiftGlobal}*`,
       repStr
     ];
 
-    // Looping semua pengerjaan (Card)
     plans.forEach(p => {
-      lines.push(''); // Baris pemisah antar pengerjaan
+      lines.push(''); 
       lines.push(`✅ *${p.customer || '-'} INV ${p.invoice || '-'}*`);
       
       const stufingStr = p.tanggal ? p.tanggal.toUpperCase() : '-';
@@ -749,21 +756,32 @@ function buildHistoryWaText(r){
       lines.push(`TOTAL PL ${p.totalPL || '-'}`);
       lines.push('*FINISH*');
 
+      // Cek Motif / Area (Finish)
       (p.motifRows || []).forEach(m => {
         const text = [m.motif, m.area].filter(Boolean).join(' ');
-        lines.push(`#${m.no} ${text}`);
+        if (text.trim() !== '') { // Hanya cetak jika ada isinya
+          lines.push(`#${m.no} ${text}`);
+        }
       });
 
+      // Cek Area Barang
       (p.brgGroups || []).forEach(g => {
-        lines.push(''); 
-        lines.push(`*BARANG DI AREA ${g.brgDi ? g.brgDi.toUpperCase() : '-'}*`);
-        (g.items || []).forEach(item => {
-          lines.push(`#${item.no} ${item.value}`);
-        });
+        const isAreaFilled = g.brgDi && g.brgDi.trim() !== '';
+        const hasItemFilled = g.items && g.items.some(item => item.value && item.value.trim() !== '');
+        
+        if (isAreaFilled || hasItemFilled) {
+          lines.push(''); 
+          lines.push(`*BARANG DI AREA ${isAreaFilled ? g.brgDi.toUpperCase() : '-'}*`);
+          
+          (g.items || []).forEach(item => {
+            if (item.value && item.value.trim() !== '') { // Abaikan jika kosong
+              lines.push(`#${item.no} ${item.value}`);
+            }
+          });
+        }
       });
     });
 
-    // Buka tab WhatsApp
     const text = lines.join('\n');
     window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
   }
