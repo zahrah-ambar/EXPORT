@@ -278,7 +278,7 @@
 <body>
 <div class="wrap">
 
-  <div class="masthead">
+ <div class="masthead">
     <div>
       <h1>FORM EXPORT</h1>
       <div class="sub">· WH FINISH GOODS</div>
@@ -286,8 +286,23 @@
     <div class="tag" id="planCount">1 PENGERJAAN</div>
   </div>
 
-  <div id="plans"></div>
+  <!-- LETAKKAN DI SINI -->
+  <div class="global-config">
+    <div class="field">
+      <label>Tanggal Laporan (Global)</label>
+      <input type="date" id="globalTanggal">
+    </div>
+    <div class="field">
+      <label>Shift (Global)</label>
+      <select id="globalShift">
+        <option value="1">Shift 1</option>
+        <option value="2">Shift 2</option>
+        <option value="3">Shift 3</option>
+      </select>
+    </div>
+  </div>
 
+  <div id="plans"></div>
   <div class="add-plan-wrap">
     <button class="btn btn-add-plan" id="addPlanBtn" type="button">+ Tambah Pengerjaan</button>
   </div>
@@ -311,20 +326,6 @@
   </div>
 
 </div>
-<div class="global-config">
-    <div class="field">
-      <label>Tanggal Laporan (Global)</label>
-      <input type="date" id="globalTanggal">
-    </div>
-    <div class="field">
-      <label>Shift (Global)</label>
-      <select id="globalShift">
-        <option value="1">Shift 1</option>
-        <option value="2">Shift 2</option>
-        <option value="3">Shift 3</option>
-      </select>
-    </div>
-  </div>
 <script>
 (function(){
   const CUSTOMERS = ["APEX","DADIDA","DECOARTS","FA HOME","FINECERA", "FLORINE", "HOSM", "JANG LUNG", "JONQOIL", "JUBIN", "LAY SHOP"];
@@ -332,8 +333,8 @@
   // ==== KONFIGURASI SUPABASE ====
   // Ganti SUPABASE_ANON_KEY dengan anon/public key project kamu (Project Settings > API).
   // URL sudah diarahkan ke project ref TAC System: addgggshvsvnzbzdbgnq
-  const SUPABASE_URL = 'https://eyqgrwfigistgiddsypi.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_E9-SgMtkL9NlfAYRl0uiXA_n2GQU30I';
+  const SUPABASE_URL = 'https://koymbeyxgiczclcofigu.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable__qyY5ysJXdc_-Xk0Ihcudg_TOHKyesl';
   const TABLE_NAME = 'update_export';
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
