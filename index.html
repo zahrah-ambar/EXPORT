@@ -634,25 +634,45 @@
   }
 
   function buildHistoryWaText(r){
-    const motifSummary = (r.motif_rows||[])
-      .map(m => [m.motif, m.area].filter(Boolean).join(' / '))
-      .filter(Boolean).join('\n  ');
-    const brgSummary = (r.brg_groups||[])
-      .map(g => g.brgDi).filter(Boolean).join('\n  ');
+    // Array untuk format hari dan bulan dalam Bahasa Indonesia
+    const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+    const months = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
+
+    // Tanggal report otomatis mengambil hari ini
+    const today = new Date();
+    const todayStr = `${days[today.getDay()]}, ${today.getDate()} ${months[today.getMonth()]} ${today.getFullYear()}`;
+
+    // Tanggal Rencana Stufing diambil dari input form (r.tanggal)
+    const stufingDate = new Date(r.tanggal);
+    const stufingStr = isNaN(stufingDate) ? r.tanggal : `${stufingDate.getDate()} ${months[stufingDate.getMonth()]}`;
+
+    // Menyusun Header dan Info Utama
     const lines = [
-      '*LAPORAN PENGERJAAN — FORM EXPORT*',
-      '━━━━━━━━━━━━━━━━━━━━',
-      '*Tanggal   :* ' + (r.tanggal || '-'),
-      '*Customer  :* ' + (r.customer || '-'),
-      '*Invoice   :* ' + (r.invoice || '-'),
-      '*Total PL  :* ' + (r.total_pl || '-'),
+      '*REPORT UPDATE PENGERJAAN EXPORT SHIFT 1*',
+      todayStr,
       '',
-      '*Motif / Area:*',
-      '  ' + (motifSummary || '-'),
-      '',
-      '*Area Barang:*',
-      '  ' + (brgSummary || '-')
+      `✅ *${r.customer || '-'} INV ${r.invoice || '-'}*`,
+      `RENCANA STUFING ${stufingStr}`,
+      `TOTAL PL ${r.total_pl || '-'}`,
+      '*FINISH*'
     ];
+
+    // Menyusun baris Motif / Area (Finish)
+    (r.motif_rows || []).forEach(m => {
+      // Menggabungkan motif dan area dengan spasi, menghilangkan jika kosong
+      const text = [m.motif, m.area].filter(Boolean).join(' ');
+      lines.push(`#${m.no} ${text}`);
+    });
+
+    // Menyusun baris Area Barang beserta items-nya
+    (r.brg_groups || []).forEach(g => {
+      lines.push(''); // Baris kosong sebelum tiap area barang baru
+      lines.push(`*BARANG DI AREA ${g.brgDi ? g.brgDi.toUpperCase() : '-'}*`);
+      (g.items || []).forEach(item => {
+        lines.push(`#${item.no} ${item.value}`);
+      });
+    });
+
     return lines.join('\n');
   }
 
