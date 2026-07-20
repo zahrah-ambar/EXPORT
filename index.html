@@ -361,18 +361,9 @@
       invoice: '',
       tanggal: '',
       totalPL: '',
-      motifRows: [
-    { no:'#1', motif:'', area:'' }
-],
-
-brgGroups: [
-    {
-        brgDi:'',
-        items:[
-            { no:'#1', value:'' }
-        ]
-    }
-]
+      motifRows: [ { no:'#1', motif:'', area:'' } ],
+      brgGroups: [ { brgDi:'', items:[ { no:'#1', value:'' } ] } ]
+    };
   }
 
   function render(){
@@ -393,16 +384,30 @@ brgGroups: [
     if(html !== undefined) e.innerHTML = html;
     return e;
   }
-    // Buat elemen datalist (opsi dropdown pencarian) di dalam body jika belum ada
-  if(!document.getElementById('listNomor')){
+
+  function makeNoSelect(value, onChange, variant){
+    const sel = document.createElement('select');
+    sel.className = 'idx-box idx-select' + (variant ? ' '+variant : '');
+    for(let n=1;n<=30;n++){
+      const o = el('option', null, '#'+n);
+      o.value = n;
+      if(!document.getElementById('listNomor')){
     const dl = document.createElement('datalist');
     dl.id = 'listNomor';
+      if(Number(value)===n) o.selected = true;
+      sel.appendChild(o);
+    }
+    sel.onchange = e => { onChange(Number(e.target.value)); updateJson(); };
+    return sel;
+  }
+
+  function renderPlanCard(plan, index){
+    const card = el('div','plan');
     
     // Tambahkan opsi khusus HANYA '#'
     const optHash = document.createElement('option');
     optHash.value = '#';
     dl.appendChild(optHash);
-    
     // Tambahkan opsi #1 sampai #30
     for(let n=1; n<=30; n++){
       const opt = document.createElement('option');
@@ -415,9 +420,10 @@ brgGroups: [
   function makeNoSelect(value, onChange, variant){
     const inp = document.createElement('input');
     inp.type = 'text';
-    inp.setAttribute('list', 'listNomor'); 
-    inp.className = 'idx-box'; 
+    inp.setAttribute('list', 'listNomor'); // Hubungkan ke datalist
+    inp.className = 'idx-box'; // Hapus class select bawaan agar tidak bentrok
     
+    // Styling manual agar ukurannya mirip dengan kotak dropdown sebelumnya
     inp.style.width = variant === 'sub' ? '60px' : '75px';
     inp.style.height = variant === 'sub' ? '34px' : '38px';
     inp.style.textAlign = 'center';
@@ -427,39 +433,12 @@ brgGroups: [
     
     inp.value = value;
     
+    // Blok/select semua teks saat diklik, supaya gampang saat mau ketik/search angka baru
     inp.onclick = () => inp.select(); 
+    
     inp.oninput = e => { onChange(e.target.value); updateJson(); };
     return inp;
   }
-
- function makeNoSelect(value, onChange, variant){
-    const sel = document.createElement('select');
-    sel.className = 'idx-box idx-select' + (variant ? ' '+variant : '');
-
-    // Opsi pertama
-    const first = document.createElement('option');
-    first.value = '#';
-    first.textContent = '#';
-    sel.appendChild(first);
-
-    // Opsi #1 sampai #30
-    for(let i = 1; i <= 30; i++){
-        const opt = document.createElement('option');
-        opt.value = '#' + i;
-        opt.textContent = '#' + i;
-        sel.appendChild(opt);
-    }
-
-    sel.value = value || '#';
-
-    sel.onchange = e => {
-        onChange(e.target.value);
-        updateJson();
-    };
-
-    return sel;
-}
- 
     // HEAD
     const head = el('div','plan-head');
     head.appendChild(el('div','plan-index', 'PENGERJAAN #' + String(index+1).padStart(2,'0')));
@@ -528,12 +507,7 @@ brgGroups: [
     body.appendChild(motifRows);
     const addMotifBtn = el('button','btn btn-add','+ Tambah Motif / Area');
     addMotifBtn.type='button';
-    addMotifBtn.onclick = () => { // Tambah Motif Finish
-plan.motifRows.push({
-    no:'#' + Math.min(plan.motifRows.length + 1, 30),
-    motif:'',
-    area:''
-});
+    addMotifBtn.onclick = () => { plan.motifRows.push({no:'#'+Math.min(plan.motifRows.length+1,30),motif:'',area:''}); render(); };
 
     // DIVIDER: Area Brg
     body.appendChild(dividerEl('Area Barang (Contoh: FG07/EXPORT)'));
@@ -541,7 +515,7 @@ plan.motifRows.push({
     const addBrgWrap = el('div','add-brg-wrap');
     const addBrgBtn = el('button','btn btn-add','+ Tambah Area Barang');
     addBrgBtn.type='button';
-    addBrgBtn.onclick = () => { plan.brgGroups.push({brgDi:'', items:[{value:''}]}); render(); };
+    addBrgBtn.onclick = () => { plan.brgGroups.push({brgDi:'', items:[{ no:'#1', value:'' }]}); render(); };
     addBrgWrap.appendChild(addBrgBtn);
     body.appendChild(addBrgWrap);
 
@@ -619,10 +593,7 @@ plan.motifRows.push({
     addItemBtn.type='button';
     addItemBtn.style.fontSize='12px';
     addItemBtn.style.padding='6px 12px';
-    addItemBtn.onclick = () => { grp.items.push({
-    no:'#' + Math.min(grp.items.length + 1, 30),
-    value:''
-});
+    addItemBtn.onclick = () => { grp.items.push({no:'#'+Math.min(grp.items.length+1,30),value:''}); render(); };
     addItemWrap.appendChild(addItemBtn);
     g.appendChild(addItemWrap);
 
@@ -736,7 +707,8 @@ plan.motifRows.push({
     wrap.innerHTML = '';
     wrap.appendChild(table);
   }
-  function buildHistoryWaText(r){
+
+function buildHistoryWaText(r){
     const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
     const months = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
 
@@ -756,26 +728,27 @@ plan.motifRows.push({
       '*FINISH*'
     ];
 
-    // Cek Motif / Area (Finish) - HAPUS SIMBOL # GANDA
+    // Cek Motif / Area (Finish)
     (r.motif_rows || []).forEach(m => {
       const text = [m.motif, m.area].filter(Boolean).join(' ');
-      if (text.trim() !== '') { 
-        lines.push(`${m.no} ${text}`);
+      if (text.trim() !== '') { // Hanya cetak jika ada isinya
+        lines.push(`#${m.no} ${text}`);
       }
     });
 
-    // Cek Area Barang - HAPUS SIMBOL # GANDA
+    // Cek Area Barang
     (r.brg_groups || []).forEach(g => {
       const isAreaFilled = g.brgDi && g.brgDi.trim() !== '';
       const hasItemFilled = g.items && g.items.some(item => item.value && item.value.trim() !== '');
       
+      // Tampilkan judul Area jika nama Area-nya diisi ATAU itemnya ada yang diisi
       if (isAreaFilled || hasItemFilled) {
         lines.push(''); 
         lines.push(`*BARANG DI AREA ${isAreaFilled ? g.brgDi.toUpperCase() : '-'}*`);
         
         (g.items || []).forEach(item => {
-          if (item.value && item.value.trim() !== '') { 
-            lines.push(`${item.no} ${item.value}`);
+          if (item.value && item.value.trim() !== '') { // Abaikan jika kosong
+            lines.push(`#${item.no} ${item.value}`);
           }
         });
       }
@@ -783,7 +756,18 @@ plan.motifRows.push({
 
     return lines.join('\n');
   }
+  function shareHistoryToWA(r){
+    const text = buildHistoryWaText(r);
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+  }
 
+  document.getElementById('addPlanBtn').onclick = () => {
+    plans.push(newPlan());
+    render();
+  };
+
+  document.getElementById('submitBtn').onclick = submitToSupabase;
+  document.getElementById('refreshBtn').onclick = loadHistory;
   // ==== SHARE SEMUA PENGERJAAN KE WA SEKALIGUS ====
   function shareAllToWA() {
     const shiftGlobal = document.getElementById('globalShift').value || '1';
@@ -802,7 +786,7 @@ plan.motifRows.push({
 
     plans.forEach(p => {
       lines.push(''); 
-      lines.push(`✅ *${p.customer || '-'} INV ${p.invoice || '-'}*`);
+      lines.push(`${m.no} ${text}`);
       
       const stufingStr = p.tanggal ? p.tanggal.toUpperCase() : '-';
       lines.push(`RENCANA STUFING ${stufingStr}`);
@@ -812,8 +796,8 @@ plan.motifRows.push({
       // Cek Motif / Area (Finish)
       (p.motifRows || []).forEach(m => {
         const text = [m.motif, m.area].filter(Boolean).join(' ');
-        if (text.trim() !== '') { 
-           lines.push(`${m.no} ${text}`);
+        if (text.trim() !== '') { // Hanya cetak jika ada isinya
+           lines.push(`${item.no} ${item.value}`);
         }
       });
 
@@ -827,8 +811,8 @@ plan.motifRows.push({
           lines.push(`*BARANG DI AREA ${isAreaFilled ? g.brgDi.toUpperCase() : '-'}*`);
           
           (g.items || []).forEach(item => {
-            if (item.value && item.value.trim() !== '') { 
-              lines.push(`${item.no} ${item.value}`);
+            if (item.value && item.value.trim() !== '') { // Abaikan jika kosong
+              lines.push(`#${item.no} ${item.value}`);
             }
           });
         }
@@ -839,6 +823,8 @@ plan.motifRows.push({
     window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
   }
 
+  // Daftarkan event klik untuk tombol baru
+  document.getElementById('shareWaGlobalBtn').onclick = shareAllToWA;
   // init
   plans.push(newPlan());
   render();
