@@ -126,15 +126,13 @@
     width:30px;height:38px;display:flex;align-items:center;justify-content:center;
     border-radius:3px;flex-shrink:0;
   }
-  select.idx-select{
-    width:80px;height:38px;text-align:center;text-align-last:center;
-    -moz-text-align-last:center;cursor:pointer;padding:0 8px;
-    appearance:none;-webkit-appearance:none;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Cpath d='M0 0L4 6L8 0Z' fill='%2316233F'/%3E%3C/svg%3E");
-    background-repeat:no-repeat;background-position:right 8px center;
+  input.idx-select{
+    width:75px;height:38px;text-align:center;
+    cursor:text;padding:0 4px;
+    background:var(--amber-soft);
   }
-  select.idx-select.sub{
-    width:50px;height:34px;font-size:11px;background:#fff;
+  input.idx-select.sub{
+    width:60px;height:34px;font-size:11px;background:#fff;
   }
   .row-item input{flex:1;}
   .row-item .rm-btn{flex-shrink:0;}
@@ -177,7 +175,7 @@
     margin-top:3px;
   }
   .sub-rows{display:flex;flex-direction:column;gap:7px;margin-left:38px;}
-  .sub-rows select.idx-select.sub{
+  .sub-rows input.idx-select.sub{
     width:70px;height:34px;background:#fff;font-size:11px;padding:0 6px;
   }
   .sub-rows .row-item input{padding:7px 9px;font-size:13px;}
@@ -292,7 +290,6 @@
     <div class="tag" id="planCount">1 PENGERJAAN</div>
   </div>
 
-  <!-- LETAKKAN DI SINI -->
   <div class="global-config">
     <div class="field">
       <label>Tanggal Laporan (Global)</label>
@@ -340,10 +337,8 @@
   const CUSTOMERS = ["APEX","DADIDA","DECOARTS","FA HOME","FINECERA", "FLORINE", "HOSM", "JANG LUNG", "JONQOIL", "JUBIN", "LAY SHOP", "MEYYAFUSHI", "MFT RES.", "MUNI E.", "SUPER GRESS", "TOPCERA", "W.K CERAMIC"];
 
   // ==== KONFIGURASI SUPABASE ====
-  // Ganti SUPABASE_ANON_KEY dengan anon/public key project kamu (Project Settings > API).
-  // URL sudah diarahkan ke project ref TAC System: addgggshvsvnzbzdbgnq
-  const SUPABASE_URL = 'https://koymbeyxgiczclcofigu.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable__qyY5ysJXdc_-Xk0Ihcudg_TOHKyesl';
+  const SUPABASE_URL = 'https://eyqgrwfigistgiddsypi.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_E9-SgMtkL9NlfAYRl0uiXA_n2GQU30I';
   const TABLE_NAME = 'update_export';
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -352,7 +347,7 @@
 
   function uid(prefix){ return prefix + '_' + Math.random().toString(36).slice(2,9); }
 
- function newPlan(){
+  function newPlan(){
     planSeq++;
     return {
       id: uid('plan'),
@@ -366,18 +361,6 @@
     };
   }
 
-  function render(){
-    const container = document.getElementById('plans');
-    container.innerHTML = '';
-    plans.forEach((plan, i) => container.appendChild(renderPlanCard(plan, i)));
-    document.getElementById('planCount').textContent = plans.length + (plans.length>1 ? ' PENGERJAAN' : ' PENGERJAAN');
-    updateJson();
-  }
-
-  function updateJson(){
-    document.getElementById('jsonOut').textContent = JSON.stringify(plans, null, 2);
-  }
-
   function el(tag, cls, html){
     const e = document.createElement(tag);
     if(cls) e.className = cls;
@@ -385,30 +368,14 @@
     return e;
   }
 
-  function makeNoSelect(value, onChange, variant){
-    const sel = document.createElement('select');
-    sel.className = 'idx-box idx-select' + (variant ? ' '+variant : '');
-    for(let n=1;n<=30;n++){
-      const o = el('option', null, '#'+n);
-      o.value = n;
-      if(!document.getElementById('listNomor')){
+  // ==== Datalist #1..#30 (dibuat sekali saja) ====
+  function ensureListNomor(){
+    if(document.getElementById('listNomor')) return;
     const dl = document.createElement('datalist');
     dl.id = 'listNomor';
-      if(Number(value)===n) o.selected = true;
-      sel.appendChild(o);
-    }
-    sel.onchange = e => { onChange(Number(e.target.value)); updateJson(); };
-    return sel;
-  }
-
-  function renderPlanCard(plan, index){
-    const card = el('div','plan');
-    
-    // Tambahkan opsi khusus HANYA '#'
     const optHash = document.createElement('option');
     optHash.value = '#';
     dl.appendChild(optHash);
-    // Tambahkan opsi #1 sampai #30
     for(let n=1; n<=30; n++){
       const opt = document.createElement('option');
       opt.value = '#' + n;
@@ -417,28 +384,40 @@
     document.body.appendChild(dl);
   }
 
+  // ==== Input nomor dengan datalist (pengganti dropdown lama) ====
   function makeNoSelect(value, onChange, variant){
     const inp = document.createElement('input');
     inp.type = 'text';
-    inp.setAttribute('list', 'listNomor'); // Hubungkan ke datalist
-    inp.className = 'idx-box'; // Hapus class select bawaan agar tidak bentrok
-    
-    // Styling manual agar ukurannya mirip dengan kotak dropdown sebelumnya
-    inp.style.width = variant === 'sub' ? '60px' : '75px';
-    inp.style.height = variant === 'sub' ? '34px' : '38px';
-    inp.style.textAlign = 'center';
-    inp.style.cursor = 'text';
-    inp.style.padding = '0 4px';
-    inp.style.backgroundColor = variant === 'sub' ? '#fff' : 'var(--amber-soft)';
-    
+    inp.setAttribute('list', 'listNomor');
+    inp.className = 'idx-box idx-select' + (variant ? ' ' + variant : '');
     inp.value = value;
-    
-    // Blok/select semua teks saat diklik, supaya gampang saat mau ketik/search angka baru
-    inp.onclick = () => inp.select(); 
-    
+    inp.onclick = () => inp.select();
     inp.oninput = e => { onChange(e.target.value); updateJson(); };
     return inp;
   }
+
+  function render(){
+    const container = document.getElementById('plans');
+    container.innerHTML = '';
+    plans.forEach((plan, i) => container.appendChild(renderPlanCard(plan, i)));
+    document.getElementById('planCount').textContent = plans.length + ' PENGERJAAN';
+    updateJson();
+  }
+
+  function updateJson(){
+    document.getElementById('jsonOut').textContent = JSON.stringify(plans, null, 2);
+  }
+
+  function dividerEl(text){
+    const d = el('div','divider');
+    d.appendChild(el('span','lbl', text));
+    d.appendChild(el('span','rule'));
+    return d;
+  }
+
+  function renderPlanCard(plan, index){
+    const card = el('div','plan');
+
     // HEAD
     const head = el('div','plan-head');
     head.appendChild(el('div','plan-index', 'PENGERJAAN #' + String(index+1).padStart(2,'0')));
@@ -481,8 +460,8 @@
     const fTgl = el('div','field');
     fTgl.appendChild(el('label',null,'Pengerjaan Stufing (Manual)'));
     const inTgl = document.createElement('input');
-    inTgl.type = 'text'; 
-    inTgl.placeholder = 'cth: 8 JULI'; 
+    inTgl.type = 'text';
+    inTgl.placeholder = 'cth: 8 JULI';
     inTgl.value = plan.tanggal;
     inTgl.oninput = e => { plan.tanggal = e.target.value; updateJson(); };
     fTgl.appendChild(inTgl);
@@ -508,6 +487,7 @@
     const addMotifBtn = el('button','btn btn-add','+ Tambah Motif / Area');
     addMotifBtn.type='button';
     addMotifBtn.onclick = () => { plan.motifRows.push({no:'#'+Math.min(plan.motifRows.length+1,30),motif:'',area:''}); render(); };
+    body.appendChild(addMotifBtn);
 
     // DIVIDER: Area Brg
     body.appendChild(dividerEl('Area Barang (Contoh: FG07/EXPORT)'));
@@ -524,16 +504,9 @@
     return card;
   }
 
-  function dividerEl(text){
-    const d = el('div','divider');
-    d.appendChild(el('span','lbl', text));
-    d.appendChild(el('span','rule'));
-    return d;
-  }
-
   function renderMotifRow(plan, row, ri){
     const wrap = el('div','row-item');
-    wrap.appendChild(makeNoSelect(row.no || (ri+1), (v)=>{ row.no = v; }));
+    wrap.appendChild(makeNoSelect(row.no || ('#'+(ri+1)), (v)=>{ row.no = v; }));
     const inMotif = document.createElement('input');
     inMotif.type='text'; inMotif.placeholder='Motif'; inMotif.value=row.motif;
     inMotif.oninput = e => { row.motif = e.target.value; updateJson(); };
@@ -571,7 +544,7 @@
     const subRows = el('div','sub-rows');
     grp.items.forEach((item, ii) => {
       const row = el('div','row-item');
-      row.appendChild(makeNoSelect(item.no || (ii+1), (v)=>{ item.no = v; }, 'sub'));
+      row.appendChild(makeNoSelect(item.no || ('#'+(ii+1)), (v)=>{ item.no = v; }, 'sub'));
       const inV = document.createElement('input');
       inV.type='text'; inV.placeholder='......... (motif/manual)'; inV.value=item.value;
       inV.oninput = e => { item.value = e.target.value; updateJson(); };
@@ -607,7 +580,7 @@
     return {
       customer: plan.customer,
       invoice: plan.invoice,
-      tanggal: plan.tanggal || null, // Ini adalah tanggal rencana stufing di dalam card
+      tanggal: plan.tanggal || null,
       total_pl: plan.totalPL,
       motif_rows: plan.motifRows,
       brg_groups: plan.brgGroups,
@@ -631,7 +604,7 @@
     btn.disabled = true;
     statusEl.textContent = 'Mengirim data...';
     statusEl.className = '';
-    
+
     try{
       const rows = plans.map(planToRow);
       const { data, error } = await supabaseClient.from(TABLE_NAME).insert(rows).select();
@@ -640,7 +613,6 @@
       statusEl.textContent = 'Berhasil disimpan (' + data.length + ' pengerjaan).';
       statusEl.className = 'ok';
 
-      // reset form setelah sukses
       plans = [newPlan()];
       render();
       loadHistory();
@@ -708,7 +680,7 @@
     wrap.appendChild(table);
   }
 
-function buildHistoryWaText(r){
+  function buildHistoryWaText(r){
     const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
     const months = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
 
@@ -728,27 +700,24 @@ function buildHistoryWaText(r){
       '*FINISH*'
     ];
 
-    // Cek Motif / Area (Finish)
     (r.motif_rows || []).forEach(m => {
       const text = [m.motif, m.area].filter(Boolean).join(' ');
-      if (text.trim() !== '') { // Hanya cetak jika ada isinya
-        lines.push(`#${m.no} ${text}`);
+      if (text.trim() !== '') {
+        lines.push(`${m.no} ${text}`);
       }
     });
 
-    // Cek Area Barang
     (r.brg_groups || []).forEach(g => {
       const isAreaFilled = g.brgDi && g.brgDi.trim() !== '';
       const hasItemFilled = g.items && g.items.some(item => item.value && item.value.trim() !== '');
-      
-      // Tampilkan judul Area jika nama Area-nya diisi ATAU itemnya ada yang diisi
+
       if (isAreaFilled || hasItemFilled) {
-        lines.push(''); 
+        lines.push('');
         lines.push(`*BARANG DI AREA ${isAreaFilled ? g.brgDi.toUpperCase() : '-'}*`);
-        
+
         (g.items || []).forEach(item => {
-          if (item.value && item.value.trim() !== '') { // Abaikan jika kosong
-            lines.push(`#${item.no} ${item.value}`);
+          if (item.value && item.value.trim() !== '') {
+            lines.push(`${item.no} ${item.value}`);
           }
         });
       }
@@ -756,23 +725,17 @@ function buildHistoryWaText(r){
 
     return lines.join('\n');
   }
+
   function shareHistoryToWA(r){
     const text = buildHistoryWaText(r);
     window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
   }
 
-  document.getElementById('addPlanBtn').onclick = () => {
-    plans.push(newPlan());
-    render();
-  };
-
-  document.getElementById('submitBtn').onclick = submitToSupabase;
-  document.getElementById('refreshBtn').onclick = loadHistory;
   // ==== SHARE SEMUA PENGERJAAN KE WA SEKALIGUS ====
   function shareAllToWA() {
     const shiftGlobal = document.getElementById('globalShift').value || '1';
     const tglGlobal = document.getElementById('globalTanggal').value;
-    
+
     const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
     const months = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
 
@@ -785,34 +748,32 @@ function buildHistoryWaText(r){
     ];
 
     plans.forEach(p => {
-      lines.push(''); 
-      lines.push(`${m.no} ${text}`);
-      
+      lines.push('');
+      lines.push(`✅ *${p.customer || '-'} INV ${p.invoice || '-'}*`);
+
       const stufingStr = p.tanggal ? p.tanggal.toUpperCase() : '-';
       lines.push(`RENCANA STUFING ${stufingStr}`);
       lines.push(`TOTAL PL ${p.totalPL || '-'}`);
       lines.push('*FINISH*');
 
-      // Cek Motif / Area (Finish)
       (p.motifRows || []).forEach(m => {
         const text = [m.motif, m.area].filter(Boolean).join(' ');
-        if (text.trim() !== '') { // Hanya cetak jika ada isinya
-           lines.push(`${item.no} ${item.value}`);
+        if (text.trim() !== '') {
+          lines.push(`${m.no} ${text}`);
         }
       });
 
-      // Cek Area Barang
       (p.brgGroups || []).forEach(g => {
         const isAreaFilled = g.brgDi && g.brgDi.trim() !== '';
         const hasItemFilled = g.items && g.items.some(item => item.value && item.value.trim() !== '');
-        
+
         if (isAreaFilled || hasItemFilled) {
-          lines.push(''); 
+          lines.push('');
           lines.push(`*BARANG DI AREA ${isAreaFilled ? g.brgDi.toUpperCase() : '-'}*`);
-          
+
           (g.items || []).forEach(item => {
-            if (item.value && item.value.trim() !== '') { // Abaikan jika kosong
-              lines.push(`#${item.no} ${item.value}`);
+            if (item.value && item.value.trim() !== '') {
+              lines.push(`${item.no} ${item.value}`);
             }
           });
         }
@@ -823,9 +784,16 @@ function buildHistoryWaText(r){
     window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
   }
 
-  // Daftarkan event klik untuk tombol baru
+  // ==== INIT & EVENTS ====
+  document.getElementById('addPlanBtn').onclick = () => {
+    plans.push(newPlan());
+    render();
+  };
+  document.getElementById('submitBtn').onclick = submitToSupabase;
+  document.getElementById('refreshBtn').onclick = loadHistory;
   document.getElementById('shareWaGlobalBtn').onclick = shareAllToWA;
-  // init
+
+  ensureListNomor();
   plans.push(newPlan());
   render();
   loadHistory();
