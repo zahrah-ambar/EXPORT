@@ -54,15 +54,7 @@
     font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--navy);
     color:#fff;padding:5px 10px;border-radius:3px;letter-spacing:0.05em;
   }
-  /* GLOBAL CONFIG (TGL & SHIFT) */
-  .global-config {
-    display: flex; gap: 14px; margin-bottom: 22px;
-    background: var(--card); padding: 16px 18px;
-    border: 1px solid var(--line); border-radius: var(--radius);
-    box-shadow: 0 1px 2px rgba(20,25,40,0.04);
-  }
-  .global-config .field { flex: 1; display: flex; flex-direction: column; gap: 5px; }
-  @media (max-width:560px) { .global-config { flex-direction: column; } }
+
   /* PLAN LIST */
   #plans{display:flex;flex-direction:column;gap:22px;}
 
@@ -230,12 +222,6 @@
   #statusMsg{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);}
   #statusMsg.ok{color:var(--ok);}
   #statusMsg.err{color:var(--danger);}
-  .btn-wa {
-    background: #25D366; color: #fff; padding: 11px 22px; font-size: 13px;
-    letter-spacing: 0.03em; text-transform: uppercase; font-family: 'Oswald', sans-serif; 
-    font-weight: 600; border-radius: 3px;
-  }
-  .btn-wa:hover { background: #1EBE55; }
 
   /* HISTORY / TARIK DATA */
   .history{margin-top:30px;}
@@ -284,7 +270,7 @@
 <body>
 <div class="wrap">
 
- <div class="masthead">
+  <div class="masthead">
     <div>
       <h1>FORM EXPORT</h1>
       <div class="sub">· WH FINISH GOODS</div>
@@ -292,23 +278,8 @@
     <div class="tag" id="planCount">1 PENGERJAAN</div>
   </div>
 
-  <!-- LETAKKAN DI SINI -->
-  <div class="global-config">
-    <div class="field">
-      <label>Tanggal Laporan (Global)</label>
-      <input type="date" id="globalTanggal">
-    </div>
-    <div class="field">
-      <label>Shift (Global)</label>
-      <select id="globalShift">
-        <option value="1">Shift 1</option>
-        <option value="2">Shift 2</option>
-        <option value="3">Shift 3</option>
-      </select>
-    </div>
-  </div>
-
   <div id="plans"></div>
+
   <div class="add-plan-wrap">
     <button class="btn btn-add-plan" id="addPlanBtn" type="button">+ Tambah Pengerjaan</button>
   </div>
@@ -320,10 +291,7 @@
 
   <div class="submit-bar">
     <span id="statusMsg">Belum dikirim.</span>
-    <div style="display:flex; gap:10px;">
-      <button class="btn btn-wa" id="shareWaGlobalBtn" type="button">💬 Bagikan Semua ke WA</button>
-      <button class="btn btn-submit" id="submitBtn" type="button">Submit</button>
-    </div>
+    <button class="btn btn-submit" id="submitBtn" type="button">Submit</button>
   </div>
 
   <div class="history">
@@ -335,15 +303,16 @@
   </div>
 
 </div>
+
 <script>
 (function(){
-  const CUSTOMERS = ["APEX","DADIDA","DECOARTS","FA HOME","FINECERA", "FLORINE", "HOSM", "JANG LUNG", "JONQOIL", "JUBIN", "LAY SHOP", "MEYYAFUSHI", "MFT RES.", "MUNI E.", "SUPER GRESS", "TOPCERA", "W.K CERAMIC"];
+  const CUSTOMERS = ["APEX","DADIDA","DECOARTS","FA HOME","FINECERA", "FLORINE", "HOSM", "JANG LUNG", "JONQOIL", "JUBIN", "LAY SHOP"];
 
   // ==== KONFIGURASI SUPABASE ====
   // Ganti SUPABASE_ANON_KEY dengan anon/public key project kamu (Project Settings > API).
   // URL sudah diarahkan ke project ref TAC System: addgggshvsvnzbzdbgnq
-  const SUPABASE_URL = 'https://koymbeyxgiczclcofigu.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable__qyY5ysJXdc_-Xk0Ihcudg_TOHKyesl';
+  const SUPABASE_URL = 'https://eyqgrwfigistgiddsypi.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_E9-SgMtkL9NlfAYRl0uiXA_n2GQU30I';
   const TABLE_NAME = 'update_export';
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -438,14 +407,12 @@
     r1.appendChild(fInv);
     body.appendChild(r1);
 
-    // ROW 2: tanggal (MANUAL)
+    // ROW 2: tanggal (teks bebas — tidak selalu berupa tanggal pasti)
     const r2 = el('div','field-row');
     const fTgl = el('div','field');
-    fTgl.appendChild(el('label',null,'Pengerjaan Stufing (Manual)'));
+    fTgl.appendChild(el('label',null,'Pengerjaan Stufing Tgl'));
     const inTgl = document.createElement('input');
-    inTgl.type = 'text'; 
-    inTgl.placeholder = 'cth: 8 JULI'; 
-    inTgl.value = plan.tanggal;
+    inTgl.type='text'; inTgl.placeholder='cth: 17 Juli 2026 / Menyusul / TBD'; inTgl.value=plan.tanggal;
     inTgl.oninput = e => { plan.tanggal = e.target.value; updateJson(); };
     fTgl.appendChild(inTgl);
     r2.appendChild(fTgl);
@@ -564,29 +531,25 @@
   }
 
   // ==== SUBMIT: kirim semua pengerjaan ke Supabase ====
+
   function planToRow(plan){
-    const shiftGlobal = document.getElementById('globalShift').value;
-    const tglGlobal = document.getElementById('globalTanggal').value;
     return {
       customer: plan.customer,
       invoice: plan.invoice,
-      tanggal: plan.tanggal || null, // Ini adalah tanggal rencana stufing di dalam card
+      tanggal: plan.tanggal || null,
       total_pl: plan.totalPL,
       motif_rows: plan.motifRows,
-      brg_groups: plan.brgGroups,
-      shift: shiftGlobal,
-      tanggal_laporan: tglGlobal
+      brg_groups: plan.brgGroups
     };
   }
 
   async function submitToSupabase(){
     const statusEl = document.getElementById('statusMsg');
     const btn = document.getElementById('submitBtn');
-    const tglGlobal = document.getElementById('globalTanggal').value;
 
     const invalid = plans.some(p => !p.customer || !p.tanggal);
-    if(invalid || !tglGlobal){
-      statusEl.textContent = 'Gagal: Tanggal Laporan Global, Customer & Tanggal Stufing wajib diisi.';
+    if(invalid){
+      statusEl.textContent = 'Gagal: Customer & Tanggal wajib diisi di semua pengerjaan.';
       statusEl.className = 'err';
       return;
     }
@@ -594,7 +557,7 @@
     btn.disabled = true;
     statusEl.textContent = 'Mengirim data...';
     statusEl.className = '';
-    
+
     try{
       const rows = plans.map(planToRow);
       const { data, error } = await supabaseClient.from(TABLE_NAME).insert(rows).select();
@@ -616,6 +579,8 @@
   }
 
   // ==== TARIK DATA: ambil riwayat dari Supabase ====
+  let lastHistoryRows = [];
+
   async function loadHistory(){
     const wrap = document.getElementById('historyWrap');
     wrap.innerHTML = '<div class="hist-empty">Memuat data...</div>';
@@ -626,7 +591,8 @@
         .order('created_at', { ascending:false })
         .limit(50);
       if(error) throw error;
-      renderHistory(data || []);
+      lastHistoryRows = data || [];
+      renderHistory(lastHistoryRows);
     }catch(err){
       wrap.innerHTML = '<div class="hist-empty">Gagal memuat data: ' + (err.message || err) + '</div>';
     }
@@ -660,9 +626,9 @@
       const waBtn = document.createElement('button');
       waBtn.type = 'button';
       waBtn.className = 'btn-wa-share';
-      waBtn.title = 'Share laporan ini ke WhatsApp';
+      waBtn.title = 'Share laporan gabungan hari ini ke WhatsApp';
       waBtn.innerHTML = '💬';
-      waBtn.addEventListener('click', () => shareHistoryToWA(r));
+      waBtn.addEventListener('click', () => shareDailyReport(r));
       tdAksi.appendChild(waBtn);
       tbody.appendChild(tr);
     });
@@ -671,56 +637,70 @@
     wrap.appendChild(table);
   }
 
-function buildHistoryWaText(r){
-    const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
-    const months = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
+  // ==== FORMAT LAPORAN GABUNGAN (SEMUA PENGERJAAN PADA TANGGAL YANG SAMA) ====
+  const HARI_ID = ['MINGGU','SENIN','SELASA','RABU','KAMIS',"JUM'AT",'SABTU'];
+  const BULAN_ID = ['JANUARI','FEBRUARI','MARET','APRIL','MEI','JUNI','JULI','AGUSTUS','SEPTEMBER','OKTOBER','NOVEMBER','DESEMBER'];
 
-    const repDate = r.tanggal_laporan ? new Date(r.tanggal_laporan) : new Date();
-    const repStr = isNaN(repDate) ? (r.tanggal_laporan || '-') : `${days[repDate.getDay()]}, ${repDate.getDate()} ${months[repDate.getMonth()]} ${repDate.getFullYear()}`;
+  function dateKeyFromCreatedAt(createdAt){
+    const d = new Date(createdAt);
+    if(isNaN(d)) return '';
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function fmtHariTanggalLengkap(d){
+    return HARI_ID[d.getDay()] + ', ' + d.getDate() + ' ' + BULAN_ID[d.getMonth()] + ' ' + d.getFullYear();
+  }
+  function fmtTanggalSingkat(dateStr){
+    if(!dateStr) return '-';
+    const d = new Date(dateStr + 'T00:00:00');
+    if(isNaN(d)) return dateStr;
+    return d.getDate() + ' ' + BULAN_ID[d.getMonth()];
+  }
 
-    const stufingStr = r.tanggal ? r.tanggal.toUpperCase() : '-';
-    const shift = r.shift || '1';
+  function buildDailyReportText(allRows, groupDateKey){
+    const groupRows = allRows.filter(r => dateKeyFromCreatedAt(r.created_at) === groupDateKey);
+    if(!groupRows.length) return '';
+    const groupDate = new Date(groupRows[0].created_at);
 
     const lines = [
-      `*REPORT UPDATE PENGERJAAN EXPORT SHIFT ${shift}*`,
-      repStr,
-      '',
-      `✅ *${r.customer || '-'} INV ${r.invoice || '-'}*`,
-      `RENCANA STUFING ${stufingStr}`,
-      `TOTAL PL ${r.total_pl || '-'}`,
-      '*FINISH*'
+      'REPORT UPDATE PENGERJAAN EXPORT',
+      fmtHariTanggalLengkap(groupDate),
+      ''
     ];
 
-    // Cek Motif / Area (Finish)
-    (r.motif_rows || []).forEach(m => {
-      const text = [m.motif, m.area].filter(Boolean).join(' ');
-      if (text.trim() !== '') { // Hanya cetak jika ada isinya
-        lines.push(`#${m.no} ${text}`);
+    groupRows.forEach(r => {
+      lines.push('✅ ' + (r.customer || '-').toUpperCase() + ' INV ' + (r.invoice || '-'));
+      lines.push('RENCANA STUFING ' + fmtTanggalSingkat(r.tanggal));
+      lines.push('TOTAL PL ' + (r.total_pl || '-').toString().toUpperCase());
+
+      const motifRows = (r.motif_rows||[]).slice().sort((a,b)=>(a.no||0)-(b.no||0));
+      const motifLines = motifRows
+        .map(m => ({ no:m.no, txt:[m.motif,m.area].filter(Boolean).join(' ') }))
+        .filter(m => m.txt);
+      if(motifLines.length){
+        lines.push('FINISH');
+        motifLines.forEach(m => lines.push('#' + m.no + ' ' + m.txt.toUpperCase()));
       }
+
+      (r.brg_groups||[]).forEach(g => {
+        const items = (g.items||[]).slice().sort((a,b)=>(a.no||0)-(b.no||0)).filter(it => it.value);
+        if(g.brgDi || items.length){
+          lines.push('');
+          lines.push('BARANG DI ' + (g.brgDi||'-').toUpperCase());
+          items.forEach(it => lines.push('#' + it.no + ' ' + it.value.toUpperCase()));
+        }
+      });
+
+      lines.push('');
     });
 
-    // Cek Area Barang
-    (r.brg_groups || []).forEach(g => {
-      const isAreaFilled = g.brgDi && g.brgDi.trim() !== '';
-      const hasItemFilled = g.items && g.items.some(item => item.value && item.value.trim() !== '');
-      
-      // Tampilkan judul Area jika nama Area-nya diisi ATAU itemnya ada yang diisi
-      if (isAreaFilled || hasItemFilled) {
-        lines.push(''); 
-        lines.push(`*BARANG DI AREA ${isAreaFilled ? g.brgDi.toUpperCase() : '-'}*`);
-        
-        (g.items || []).forEach(item => {
-          if (item.value && item.value.trim() !== '') { // Abaikan jika kosong
-            lines.push(`#${item.no} ${item.value}`);
-          }
-        });
-      }
-    });
-
+    while(lines.length && lines[lines.length-1] === '') lines.pop();
     return lines.join('\n');
   }
-  function shareHistoryToWA(r){
-    const text = buildHistoryWaText(r);
+
+  function shareDailyReport(r){
+    const key = dateKeyFromCreatedAt(r.created_at);
+    const text = buildDailyReportText(lastHistoryRows, key);
+    if(!text){ alert('Tidak ada data untuk tanggal ini'); return; }
     window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
   }
 
@@ -731,63 +711,7 @@ function buildHistoryWaText(r){
 
   document.getElementById('submitBtn').onclick = submitToSupabase;
   document.getElementById('refreshBtn').onclick = loadHistory;
-  // ==== SHARE SEMUA PENGERJAAN KE WA SEKALIGUS ====
-  function shareAllToWA() {
-    const shiftGlobal = document.getElementById('globalShift').value || '1';
-    const tglGlobal = document.getElementById('globalTanggal').value;
-    
-    const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
-    const months = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
 
-    const repDate = tglGlobal ? new Date(tglGlobal) : new Date();
-    const repStr = isNaN(repDate) ? (tglGlobal || '-') : `${days[repDate.getDay()]}, ${repDate.getDate()} ${months[repDate.getMonth()]} ${repDate.getFullYear()}`;
-
-    const lines = [
-      `*REPORT UPDATE PENGERJAAN EXPORT SHIFT ${shiftGlobal}*`,
-      repStr
-    ];
-
-    plans.forEach(p => {
-      lines.push(''); 
-      lines.push(`✅ *${p.customer || '-'} INV ${p.invoice || '-'}*`);
-      
-      const stufingStr = p.tanggal ? p.tanggal.toUpperCase() : '-';
-      lines.push(`RENCANA STUFING ${stufingStr}`);
-      lines.push(`TOTAL PL ${p.totalPL || '-'}`);
-      lines.push('*FINISH*');
-
-      // Cek Motif / Area (Finish)
-      (p.motifRows || []).forEach(m => {
-        const text = [m.motif, m.area].filter(Boolean).join(' ');
-        if (text.trim() !== '') { // Hanya cetak jika ada isinya
-          lines.push(`#${m.no} ${text}`);
-        }
-      });
-
-      // Cek Area Barang
-      (p.brgGroups || []).forEach(g => {
-        const isAreaFilled = g.brgDi && g.brgDi.trim() !== '';
-        const hasItemFilled = g.items && g.items.some(item => item.value && item.value.trim() !== '');
-        
-        if (isAreaFilled || hasItemFilled) {
-          lines.push(''); 
-          lines.push(`*BARANG DI AREA ${isAreaFilled ? g.brgDi.toUpperCase() : '-'}*`);
-          
-          (g.items || []).forEach(item => {
-            if (item.value && item.value.trim() !== '') { // Abaikan jika kosong
-              lines.push(`#${item.no} ${item.value}`);
-            }
-          });
-        }
-      });
-    });
-
-    const text = lines.join('\n');
-    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
-  }
-
-  // Daftarkan event klik untuk tombol baru
-  document.getElementById('shareWaGlobalBtn').onclick = shareAllToWA;
   // init
   plans.push(newPlan());
   render();
