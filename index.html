@@ -425,7 +425,30 @@
 
   function renderPlanCard(plan, index){
     const card = el('div','plan');
+  function makeNoSelect(value, onChange, variant){
+    const sel = document.createElement('select');
+    sel.className = 'idx-box idx-select' + (variant ? ' '+variant : '');
 
+    // 1. Tambahkan opsi khusus HANYA '#'
+    const optHash = document.createElement('option');
+    optHash.value = '#';
+    optHash.textContent = '#';
+    if(value === '#') optHash.selected = true;
+    sel.appendChild(optHash);
+
+    // 2. Tambahkan opsi #1 sampai #30
+    for(let n=1; n<=30; n++){
+      const valStr = '#' + n;
+      const o = document.createElement('option');
+      o.value = valStr;
+      o.textContent = valStr;
+      if(value === valStr) o.selected = true;
+      sel.appendChild(o);
+    }
+
+    sel.onchange = e => { onChange(e.target.value); updateJson(); };
+    return sel;
+  }
  
     // HEAD
     const head = el('div','plan-head');
