@@ -384,30 +384,16 @@
     if(html !== undefined) e.innerHTML = html;
     return e;
   }
-
-  function makeNoSelect(value, onChange, variant){
-    const sel = document.createElement('select');
-    sel.className = 'idx-box idx-select' + (variant ? ' '+variant : '');
-    for(let n=1;n<=30;n++){
-      const o = el('option', null, '#'+n);
-      o.value = n;
-      if(!document.getElementById('listNomor')){
+    // Buat elemen datalist (opsi dropdown pencarian) di dalam body jika belum ada
+  if(!document.getElementById('listNomor')){
     const dl = document.createElement('datalist');
     dl.id = 'listNomor';
-      if(Number(value)===n) o.selected = true;
-      sel.appendChild(o);
-    }
-    sel.onchange = e => { onChange(Number(e.target.value)); updateJson(); };
-    return sel;
-  }
-
-  function renderPlanCard(plan, index){
-    const card = el('div','plan');
     
     // Tambahkan opsi khusus HANYA '#'
     const optHash = document.createElement('option');
     optHash.value = '#';
     dl.appendChild(optHash);
+    
     // Tambahkan opsi #1 sampai #30
     for(let n=1; n<=30; n++){
       const opt = document.createElement('option');
@@ -420,10 +406,9 @@
   function makeNoSelect(value, onChange, variant){
     const inp = document.createElement('input');
     inp.type = 'text';
-    inp.setAttribute('list', 'listNomor'); // Hubungkan ke datalist
-    inp.className = 'idx-box'; // Hapus class select bawaan agar tidak bentrok
+    inp.setAttribute('list', 'listNomor'); 
+    inp.className = 'idx-box'; 
     
-    // Styling manual agar ukurannya mirip dengan kotak dropdown sebelumnya
     inp.style.width = variant === 'sub' ? '60px' : '75px';
     inp.style.height = variant === 'sub' ? '34px' : '38px';
     inp.style.textAlign = 'center';
@@ -433,12 +418,15 @@
     
     inp.value = value;
     
-    // Blok/select semua teks saat diklik, supaya gampang saat mau ketik/search angka baru
     inp.onclick = () => inp.select(); 
-    
     inp.oninput = e => { onChange(e.target.value); updateJson(); };
     return inp;
   }
+
+  function renderPlanCard(plan, index){
+    const card = el('div','plan');
+
+ 
     // HEAD
     const head = el('div','plan-head');
     head.appendChild(el('div','plan-index', 'PENGERJAAN #' + String(index+1).padStart(2,'0')));
@@ -707,8 +695,7 @@
     wrap.innerHTML = '';
     wrap.appendChild(table);
   }
-
-function buildHistoryWaText(r){
+  function buildHistoryWaText(r){
     const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
     const months = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
 
@@ -728,27 +715,26 @@ function buildHistoryWaText(r){
       '*FINISH*'
     ];
 
-    // Cek Motif / Area (Finish)
+    // Cek Motif / Area (Finish) - HAPUS SIMBOL # GANDA
     (r.motif_rows || []).forEach(m => {
       const text = [m.motif, m.area].filter(Boolean).join(' ');
-      if (text.trim() !== '') { // Hanya cetak jika ada isinya
-        lines.push(`#${m.no} ${text}`);
+      if (text.trim() !== '') { 
+        lines.push(`${m.no} ${text}`);
       }
     });
 
-    // Cek Area Barang
+    // Cek Area Barang - HAPUS SIMBOL # GANDA
     (r.brg_groups || []).forEach(g => {
       const isAreaFilled = g.brgDi && g.brgDi.trim() !== '';
       const hasItemFilled = g.items && g.items.some(item => item.value && item.value.trim() !== '');
       
-      // Tampilkan judul Area jika nama Area-nya diisi ATAU itemnya ada yang diisi
       if (isAreaFilled || hasItemFilled) {
         lines.push(''); 
         lines.push(`*BARANG DI AREA ${isAreaFilled ? g.brgDi.toUpperCase() : '-'}*`);
         
         (g.items || []).forEach(item => {
-          if (item.value && item.value.trim() !== '') { // Abaikan jika kosong
-            lines.push(`#${item.no} ${item.value}`);
+          if (item.value && item.value.trim() !== '') { 
+            lines.push(`${item.no} ${item.value}`);
           }
         });
       }
@@ -756,18 +742,7 @@ function buildHistoryWaText(r){
 
     return lines.join('\n');
   }
-  function shareHistoryToWA(r){
-    const text = buildHistoryWaText(r);
-    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
-  }
 
-  document.getElementById('addPlanBtn').onclick = () => {
-    plans.push(newPlan());
-    render();
-  };
-
-  document.getElementById('submitBtn').onclick = submitToSupabase;
-  document.getElementById('refreshBtn').onclick = loadHistory;
   // ==== SHARE SEMUA PENGERJAAN KE WA SEKALIGUS ====
   function shareAllToWA() {
     const shiftGlobal = document.getElementById('globalShift').value || '1';
@@ -786,7 +761,7 @@ function buildHistoryWaText(r){
 
     plans.forEach(p => {
       lines.push(''); 
-      lines.push(`${m.no} ${text}`);
+      lines.push(`✅ *${p.customer || '-'} INV ${p.invoice || '-'}*`);
       
       const stufingStr = p.tanggal ? p.tanggal.toUpperCase() : '-';
       lines.push(`RENCANA STUFING ${stufingStr}`);
@@ -796,8 +771,8 @@ function buildHistoryWaText(r){
       // Cek Motif / Area (Finish)
       (p.motifRows || []).forEach(m => {
         const text = [m.motif, m.area].filter(Boolean).join(' ');
-        if (text.trim() !== '') { // Hanya cetak jika ada isinya
-           lines.push(`${item.no} ${item.value}`);
+        if (text.trim() !== '') { 
+           lines.push(`${m.no} ${text}`);
         }
       });
 
@@ -811,8 +786,8 @@ function buildHistoryWaText(r){
           lines.push(`*BARANG DI AREA ${isAreaFilled ? g.brgDi.toUpperCase() : '-'}*`);
           
           (g.items || []).forEach(item => {
-            if (item.value && item.value.trim() !== '') { // Abaikan jika kosong
-              lines.push(`#${item.no} ${item.value}`);
+            if (item.value && item.value.trim() !== '') { 
+              lines.push(`${item.no} ${item.value}`);
             }
           });
         }
@@ -823,8 +798,6 @@ function buildHistoryWaText(r){
     window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
   }
 
-  // Daftarkan event klik untuk tombol baru
-  document.getElementById('shareWaGlobalBtn').onclick = shareAllToWA;
   // init
   plans.push(newPlan());
   render();
