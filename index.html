@@ -361,9 +361,18 @@
       invoice: '',
       tanggal: '',
       totalPL: '',
-      motifRows: [ { no:'#1', motif:'', area:'' } ],
-      brgGroups: [ { brgDi:'', items:[ { no:'#1', value:'' } ] } ]
-    };
+      motifRows: [
+    { no:'#1', motif:'', area:'' }
+],
+
+brgGroups: [
+    {
+        brgDi:'',
+        items:[
+            { no:'#1', value:'' }
+        ]
+    }
+]
   }
 
   function render(){
@@ -423,32 +432,33 @@
     return inp;
   }
 
-  function renderPlanCard(plan, index){
-    const card = el('div','plan');
-  function makeNoSelect(value, onChange, variant){
+ function makeNoSelect(value, onChange, variant){
     const sel = document.createElement('select');
     sel.className = 'idx-box idx-select' + (variant ? ' '+variant : '');
 
-    // 1. Tambahkan opsi khusus HANYA '#'
-    const optHash = document.createElement('option');
-    optHash.value = '#';
-    optHash.textContent = '#';
-    if(value === '#') optHash.selected = true;
-    sel.appendChild(optHash);
+    // Opsi pertama
+    const first = document.createElement('option');
+    first.value = '#';
+    first.textContent = '#';
+    sel.appendChild(first);
 
-    // 2. Tambahkan opsi #1 sampai #30
-    for(let n=1; n<=30; n++){
-      const valStr = '#' + n;
-      const o = document.createElement('option');
-      o.value = valStr;
-      o.textContent = valStr;
-      if(value === valStr) o.selected = true;
-      sel.appendChild(o);
+    // Opsi #1 sampai #30
+    for(let i = 1; i <= 30; i++){
+        const opt = document.createElement('option');
+        opt.value = '#' + i;
+        opt.textContent = '#' + i;
+        sel.appendChild(opt);
     }
 
-    sel.onchange = e => { onChange(e.target.value); updateJson(); };
+    sel.value = value || '#';
+
+    sel.onchange = e => {
+        onChange(e.target.value);
+        updateJson();
+    };
+
     return sel;
-  }
+}
  
     // HEAD
     const head = el('div','plan-head');
@@ -518,7 +528,12 @@
     body.appendChild(motifRows);
     const addMotifBtn = el('button','btn btn-add','+ Tambah Motif / Area');
     addMotifBtn.type='button';
-    addMotifBtn.onclick = () => { plan.motifRows.push({no:'#'+Math.min(plan.motifRows.length+1,30),motif:'',area:''}); render(); };
+    addMotifBtn.onclick = () => { // Tambah Motif Finish
+plan.motifRows.push({
+    no:'#' + Math.min(plan.motifRows.length + 1, 30),
+    motif:'',
+    area:''
+});
 
     // DIVIDER: Area Brg
     body.appendChild(dividerEl('Area Barang (Contoh: FG07/EXPORT)'));
@@ -604,7 +619,10 @@
     addItemBtn.type='button';
     addItemBtn.style.fontSize='12px';
     addItemBtn.style.padding='6px 12px';
-    addItemBtn.onclick = () => { grp.items.push({no:Math.min(grp.items.length+1,30),value:''}); render(); };
+    addItemBtn.onclick = () => { grp.items.push({
+    no:'#' + Math.min(grp.items.length + 1, 30),
+    value:''
+});
     addItemWrap.appendChild(addItemBtn);
     g.appendChild(addItemWrap);
 
