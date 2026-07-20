@@ -237,6 +237,12 @@
     font-weight: 600; border-radius: 3px;
   }
   .btn-wa:hover { background: #1EBE55; }
+  .btn-cancel-edit{
+    background:#fff;border:1px solid var(--danger);color:var(--danger);
+    padding:11px 18px;font-size:13px;letter-spacing:0.03em;text-transform:uppercase;
+    font-family:'Oswald',sans-serif;font-weight:600;border-radius:3px;
+  }
+  .btn-cancel-edit:hover{background:var(--danger);color:#fff;}
 
   /* HISTORY / TARIK DATA */
   .history{margin-top:30px;}
@@ -263,16 +269,18 @@
   .hist-table tr:hover td{background:var(--amber-soft);}
   .hist-empty{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);padding:14px;text-align:center;border:1px dashed var(--line);border-radius:var(--radius);}
 
-  .hist-table th.th-aksi{width:46px;text-align:center;}
-  .hist-table td.td-aksi{text-align:center;padding:6px;}
-  .btn-wa-share{
+  .hist-table th.th-aksi{width:76px;text-align:center;}
+  .hist-table td.td-aksi{text-align:center;padding:6px;white-space:nowrap;}
+  .btn-aksi-icon{
     display:inline-flex;align-items:center;justify-content:center;
-    width:32px;height:32px;border-radius:6px;border:none;
-    background:#25D366;color:#fff;cursor:pointer;font-size:15px;line-height:1;
+    width:30px;height:30px;border-radius:6px;border:none;
+    color:#fff;cursor:pointer;font-size:14px;line-height:1;margin:0 2px;
     transition:opacity .15s,transform .1s;
   }
-  .btn-wa-share:hover{opacity:.85;}
-  .btn-wa-share:active{transform:scale(.94);}
+  .btn-aksi-icon:hover{opacity:.85;}
+  .btn-aksi-icon:active{transform:scale(.94);}
+  .btn-edit{background:var(--navy-2);}
+  .btn-hapus{background:var(--danger);}
 
   @media (max-width:560px){
     .sub-rows{margin-left:20px;}
@@ -322,6 +330,7 @@
     <span id="statusMsg">Belum dikirim.</span>
     <div style="display:flex; gap:10px;">
       <button class="btn btn-wa" id="shareWaGlobalBtn" type="button">💬 Bagikan Semua ke WA</button>
+      <button class="btn btn-cancel-edit" id="cancelEditBtn" type="button" style="display:none;">Batal Edit</button>
       <button class="btn btn-submit" id="submitBtn" type="button">Submit</button>
     </div>
   </div>
@@ -340,8 +349,8 @@
   const CUSTOMERS = ["APEX","DADIDA","DECOARTS","FA HOME","FINECERA", "FLORINE", "HOSM", "JANG LUNG", "JONQOIL", "JUBIN", "LAY SHOP", "MEYYAFUSHI", "MFT RES.", "MUNI E.", "SUPER GRESS", "TOPCERA", "W.K CERAMIC"];
 
   // ==== KONFIGURASI SUPABASE ====
-  const SUPABASE_URL = 'https://koymbeyxgiczclcofigu.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable__qyY5ysJXdc_-Xk0Ihcudg_TOHKyesl';
+  const SUPABASE_URL = 'https://eyqgrwfigistgiddsypi.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_E9-SgMtkL9NlfAYRl0uiXA_n2GQU30I';
   const TABLE_NAME = 'update_export';
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -593,6 +602,8 @@
   }
 
   // ==== SUBMIT: kirim semua pengerjaan ke Supabase ====
+  let editingId = null;
+
   function planToRow(plan){
     const shiftGlobal = document.getElementById('globalShift').value;
     const tglGlobal = document.getElementById('globalTanggal').value;
@@ -608,6 +619,63 @@
     };
   }
 
+  function setEditModeUI(isEditing){
+    const btn = document.getElementById('submitBtn');
+    const cancelBtn = document.getElementById('cancelEditBtn');
+    const addPlanBtn = document.getElementById('addPlanBtn');
+    btn.textContent = isEditing ? 'Update Pengerjaan' : 'Submit';
+    cancelBtn.style.display = isEditing ? 'inline-flex' : 'none';
+    addPlanBtn.style.display = isEditing ? 'none' : 'inline-flex';
+  }
+
+  function startEditPlan(r){
+    editingId = r.id;
+    plans = [{
+      id: uid('plan'),
+      seq: ++planSeq,
+      customer: r.customer || '',
+      invoice: r.invoice || '',
+      tanggal: r.tanggal || '',
+      totalPL: r.total_pl || '',
+      motifGroups: (r.motif_rows && r.motif_rows.length) ? r.motif_rows : [{ no:'#1', items:[{motif:'',area:''}] }],
+      brgGroups: (r.brg_groups && r.brg_groups.length) ? r.brg_groups : [{ brgDi:'', items:[{no:'#1',value:''}] }]
+    }];
+    if(r.tanggal_laporan) document.getElementById('globalTanggal').value = r.tanggal_laporan;
+    if(r.shift) document.getElementById('globalShift').value = r.shift;
+    setEditModeUI(true);
+    render();
+    window.scrollTo({ top:0, behavior:'smooth' });
+    const statusEl = document.getElementById('statusMsg');
+    statusEl.textContent = 'Mode edit: ubah data lalu klik "Update Pengerjaan".';
+    statusEl.className = '';
+  }
+
+  function cancelEditPlan(){
+    editingId = null;
+    plans = [newPlan()];
+    setEditModeUI(false);
+    render();
+    const statusEl = document.getElementById('statusMsg');
+    statusEl.textContent = 'Edit dibatalkan.';
+    statusEl.className = '';
+  }
+
+  async function deleteHistoryItem(r){
+    if(!window.confirm('Hapus data pengerjaan "' + (r.customer||'-') + ' / ' + (r.invoice||'-') + '"? Tindakan ini tidak bisa dibatalkan.')) return;
+    const statusEl = document.getElementById('statusMsg');
+    try{
+      const { error } = await supabaseClient.from(TABLE_NAME).delete().eq('id', r.id);
+      if(error) throw error;
+      statusEl.textContent = 'Data berhasil dihapus.';
+      statusEl.className = 'ok';
+      if(editingId === r.id) cancelEditPlan();
+      loadHistory();
+    }catch(err){
+      statusEl.textContent = 'Gagal menghapus: ' + (err.message || err);
+      statusEl.className = 'err';
+    }
+  }
+
   async function submitToSupabase(){
     const statusEl = document.getElementById('statusMsg');
     const btn = document.getElementById('submitBtn');
@@ -621,20 +689,35 @@
     }
 
     btn.disabled = true;
-    statusEl.textContent = 'Mengirim data...';
+    statusEl.textContent = editingId ? 'Menyimpan perubahan...' : 'Mengirim data...';
     statusEl.className = '';
 
     try{
-      const rows = plans.map(planToRow);
-      const { data, error } = await supabaseClient.from(TABLE_NAME).insert(rows).select();
-      if(error) throw error;
+      if(editingId){
+        const row = planToRow(plans[0]);
+        const { error } = await supabaseClient.from(TABLE_NAME).update(row).eq('id', editingId);
+        if(error) throw error;
 
-      statusEl.textContent = 'Berhasil disimpan (' + data.length + ' pengerjaan).';
-      statusEl.className = 'ok';
+        statusEl.textContent = 'Berhasil diupdate.';
+        statusEl.className = 'ok';
 
-      plans = [newPlan()];
-      render();
-      loadHistory();
+        editingId = null;
+        plans = [newPlan()];
+        setEditModeUI(false);
+        render();
+        loadHistory();
+      }else{
+        const rows = plans.map(planToRow);
+        const { data, error } = await supabaseClient.from(TABLE_NAME).insert(rows).select();
+        if(error) throw error;
+
+        statusEl.textContent = 'Berhasil disimpan (' + data.length + ' pengerjaan).';
+        statusEl.className = 'ok';
+
+        plans = [newPlan()];
+        render();
+        loadHistory();
+      }
     }catch(err){
       statusEl.textContent = 'Gagal: ' + (err.message || err);
       statusEl.className = 'err';
@@ -687,71 +770,26 @@
         '<td>' + (brgSummary || '-') + '</td>' +
         '<td class="td-aksi"></td>';
       const tdAksi = tr.querySelector('.td-aksi');
-      const waBtn = document.createElement('button');
-      waBtn.type = 'button';
-      waBtn.className = 'btn-wa-share';
-      waBtn.title = 'Share laporan ini ke WhatsApp';
-      waBtn.innerHTML = '💬';
-      waBtn.addEventListener('click', () => shareHistoryToWA(r));
-      tdAksi.appendChild(waBtn);
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'btn-aksi-icon btn-edit';
+      editBtn.title = 'Edit data ini';
+      editBtn.innerHTML = '✎';
+      editBtn.addEventListener('click', () => startEditPlan(r));
+      tdAksi.appendChild(editBtn);
+
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'btn-aksi-icon btn-hapus';
+      delBtn.title = 'Hapus data ini';
+      delBtn.innerHTML = '🗑';
+      delBtn.addEventListener('click', () => deleteHistoryItem(r));
+      tdAksi.appendChild(delBtn);
       tbody.appendChild(tr);
     });
     table.appendChild(tbody);
     wrap.innerHTML = '';
     wrap.appendChild(table);
-  }
-
-  function buildHistoryWaText(r){
-    const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
-    const months = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
-
-    const repDate = r.tanggal_laporan ? new Date(r.tanggal_laporan) : new Date();
-    const repStr = isNaN(repDate) ? (r.tanggal_laporan || '-') : `${days[repDate.getDay()]}, ${repDate.getDate()} ${months[repDate.getMonth()]} ${repDate.getFullYear()}`;
-
-    const stufingStr = r.tanggal ? r.tanggal.toUpperCase() : '-';
-    const shift = r.shift || '1';
-
-    const lines = [
-      `*REPORT UPDATE PENGERJAAN EXPORT SHIFT ${shift}*`,
-      repStr,
-      '',
-      `✅ *${r.customer || '-'} INV ${r.invoice || '-'}*`,
-      `RENCANA STUFING ${stufingStr}`,
-      `TOTAL PL ${r.total_pl || '-'}`,
-      '*FINISH*'
-    ];
-
-    (r.motif_rows || []).forEach(grp => {
-      (grp.items || []).forEach(item => {
-        const text = [item.motif, item.area].filter(Boolean).join(' ');
-        if (text.trim() !== '') {
-          lines.push(`${grp.no} ${text}`);
-        }
-      });
-    });
-
-    (r.brg_groups || []).forEach(g => {
-      const isAreaFilled = g.brgDi && g.brgDi.trim() !== '';
-      const hasItemFilled = g.items && g.items.some(item => item.value && item.value.trim() !== '');
-
-      if (isAreaFilled || hasItemFilled) {
-        lines.push('');
-        lines.push(`*BARANG DI AREA ${isAreaFilled ? g.brgDi.toUpperCase() : '-'}*`);
-
-        (g.items || []).forEach(item => {
-          if (item.value && item.value.trim() !== '') {
-            lines.push(`${item.no} ${item.value}`);
-          }
-        });
-      }
-    });
-
-    return lines.join('\n');
-  }
-
-  function shareHistoryToWA(r){
-    const text = buildHistoryWaText(r);
-    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
   }
 
   // ==== SHARE SEMUA PENGERJAAN KE WA SEKALIGUS ====
@@ -815,6 +853,7 @@
     render();
   };
   document.getElementById('submitBtn').onclick = submitToSupabase;
+  document.getElementById('cancelEditBtn').onclick = cancelEditPlan;
   document.getElementById('refreshBtn').onclick = loadHistory;
   document.getElementById('shareWaGlobalBtn').onclick = shareAllToWA;
 
