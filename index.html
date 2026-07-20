@@ -126,13 +126,16 @@
     width:30px;height:38px;display:flex;align-items:center;justify-content:center;
     border-radius:3px;flex-shrink:0;
   }
-  input.idx-select{
-    width:75px;height:38px;text-align:center;
-    cursor:text;padding:0 4px;
-    background:var(--amber-soft);
+  select.idx-select{
+    width:80px;height:38px;text-align:center;text-align-last:center;
+    -moz-text-align-last:center;cursor:pointer;padding:0 8px;
+    appearance:none;-webkit-appearance:none;
+    background-color:var(--amber-soft);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Cpath d='M0 0L4 6L8 0Z' fill='%2316233F'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 8px center;
   }
-  input.idx-select.sub{
-    width:60px;height:34px;font-size:11px;background:#fff;
+  select.idx-select.sub{
+    width:60px;height:34px;font-size:11px;background-color:#fff;
   }
   .row-item input{flex:1;}
   .row-item .rm-btn{flex-shrink:0;}
@@ -175,8 +178,8 @@
     margin-top:3px;
   }
   .sub-rows{display:flex;flex-direction:column;gap:7px;margin-left:38px;}
-  .sub-rows input.idx-select.sub{
-    width:70px;height:34px;background:#fff;font-size:11px;padding:0 6px;
+  .sub-rows select.idx-select.sub{
+    width:70px;height:34px;background-color:#fff;font-size:11px;padding:0 6px;
   }
   .sub-rows .row-item input{padding:7px 9px;font-size:13px;}
 
@@ -337,8 +340,8 @@
   const CUSTOMERS = ["APEX","DADIDA","DECOARTS","FA HOME","FINECERA", "FLORINE", "HOSM", "JANG LUNG", "JONQOIL", "JUBIN", "LAY SHOP", "MEYYAFUSHI", "MFT RES.", "MUNI E.", "SUPER GRESS", "TOPCERA", "W.K CERAMIC"];
 
   // ==== KONFIGURASI SUPABASE ====
-  const SUPABASE_URL = 'https://eyqgrwfigistgiddsypi.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_E9-SgMtkL9NlfAYRl0uiXA_n2GQU30I';
+  const SUPABASE_URL = 'https://koymbeyxgiczclcofigu.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable__qyY5ysJXdc_-Xk0Ihcudg_TOHKyesl';
   const TABLE_NAME = 'update_export';
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -356,7 +359,7 @@
       invoice: '',
       tanggal: '',
       totalPL: '',
-      motifRows: [ { no:'#1', motif:'', area:'' } ],
+      motifGroups: [ { no:'#1', items:[ { motif:'', area:'' } ] } ],
       brgGroups: [ { brgDi:'', items:[ { no:'#1', value:'' } ] } ]
     };
   }
@@ -368,32 +371,21 @@
     return e;
   }
 
-  // ==== Datalist #1..#30 (dibuat sekali saja) ====
-  function ensureListNomor(){
-    if(document.getElementById('listNomor')) return;
-    const dl = document.createElement('datalist');
-    dl.id = 'listNomor';
-    const optHash = document.createElement('option');
-    optHash.value = '#';
-    dl.appendChild(optHash);
-    for(let n=1; n<=30; n++){
-      const opt = document.createElement('option');
-      opt.value = '#' + n;
-      dl.appendChild(opt);
-    }
-    document.body.appendChild(dl);
-  }
+  // ==== Pilihan nomor: #, #1, #2 ... #30 ====
+  const NOMOR_OPTIONS = ['#'].concat(Array.from({length:30}, (_,i)=>'#'+(i+1)));
 
-  // ==== Input nomor dengan datalist (pengganti dropdown lama) ====
   function makeNoSelect(value, onChange, variant){
-    const inp = document.createElement('input');
-    inp.type = 'text';
-    inp.setAttribute('list', 'listNomor');
-    inp.className = 'idx-box idx-select' + (variant ? ' ' + variant : '');
-    inp.value = value;
-    inp.onclick = () => inp.select();
-    inp.oninput = e => { onChange(e.target.value); updateJson(); };
-    return inp;
+    const sel = document.createElement('select');
+    sel.className = 'idx-box idx-select' + (variant ? ' ' + variant : '');
+    NOMOR_OPTIONS.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v;
+      if(value === v) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.onchange = e => { onChange(e.target.value); updateJson(); };
+    return sel;
   }
 
   function render(){
@@ -481,13 +473,13 @@
 
     // DIVIDER: Finish (judul untuk Motif & Area)
     body.appendChild(dividerEl('Finish — Motif & Area'));
-    const motifRows = el('div','rows');
-    plan.motifRows.forEach((row, ri) => motifRows.appendChild(renderMotifRow(plan, row, ri)));
-    body.appendChild(motifRows);
-    const addMotifBtn = el('button','btn btn-add','+ Tambah Motif / Area');
+    plan.motifGroups.forEach((grp, gi) => body.appendChild(renderMotifGroup(plan, grp, gi)));
+    const addMotifWrap = el('div','add-brg-wrap');
+    const addMotifBtn = el('button','btn btn-add','+ Tambah Pagar (#)');
     addMotifBtn.type='button';
-    addMotifBtn.onclick = () => { plan.motifRows.push({no:'#'+Math.min(plan.motifRows.length+1,30),motif:'',area:''}); render(); };
-    body.appendChild(addMotifBtn);
+    addMotifBtn.onclick = () => { plan.motifGroups.push({no:'#'+Math.min(plan.motifGroups.length+1,30), items:[{motif:'',area:''}]}); render(); };
+    addMotifWrap.appendChild(addMotifBtn);
+    body.appendChild(addMotifWrap);
 
     // DIVIDER: Area Brg
     body.appendChild(dividerEl('Area Barang (Contoh: FG07/EXPORT)'));
@@ -504,25 +496,52 @@
     return card;
   }
 
-  function renderMotifRow(plan, row, ri){
-    const wrap = el('div','row-item');
-    wrap.appendChild(makeNoSelect(row.no || ('#'+(ri+1)), (v)=>{ row.no = v; }));
-    const inMotif = document.createElement('input');
-    inMotif.type='text'; inMotif.placeholder='Motif'; inMotif.value=row.motif;
-    inMotif.oninput = e => { row.motif = e.target.value; updateJson(); };
-    wrap.appendChild(inMotif);
-    const inArea = document.createElement('input');
-    inArea.type='text'; inArea.placeholder='Area (manual)'; inArea.value=row.area;
-    inArea.oninput = e => { row.area = e.target.value; updateJson(); };
-    wrap.appendChild(inArea);
-    if(plan.motifRows.length > 1){
-      const rm = el('button','btn btn-icon rm-btn','✕');
-      rm.type='button';
-      rm.title='Hapus baris';
-      rm.onclick = () => { plan.motifRows.splice(ri,1); render(); };
-      wrap.appendChild(rm);
+  function renderMotifGroup(plan, grp, gi){
+    const g = el('div','brg-group');
+    const head = el('div','brg-head');
+    head.appendChild(makeNoSelect(grp.no || ('#'+(gi+1)), (v)=>{ grp.no = v; }));
+    head.appendChild(el('span','hint','Motif &amp; Area untuk pagar ini'));
+    if(plan.motifGroups.length > 1){
+      const rm = el('button','btn btn-icon','✕');
+      rm.type='button'; rm.title='Hapus pagar ini';
+      rm.onclick = () => { plan.motifGroups.splice(gi,1); render(); };
+      head.appendChild(rm);
     }
-    return wrap;
+    g.appendChild(head);
+
+    const subRows = el('div','sub-rows');
+    grp.items.forEach((item, ii) => {
+      const row = el('div','row-item');
+      const inMotif = document.createElement('input');
+      inMotif.type='text'; inMotif.placeholder='Motif'; inMotif.value=item.motif;
+      inMotif.oninput = e => { item.motif = e.target.value; updateJson(); };
+      row.appendChild(inMotif);
+      const inArea = document.createElement('input');
+      inArea.type='text'; inArea.placeholder='Area (manual)'; inArea.value=item.area;
+      inArea.oninput = e => { item.area = e.target.value; updateJson(); };
+      row.appendChild(inArea);
+      if(grp.items.length > 1){
+        const rm = el('button','btn btn-icon rm-btn','✕');
+        rm.type='button'; rm.title='Hapus motif';
+        rm.onclick = () => { grp.items.splice(ii,1); render(); };
+        row.appendChild(rm);
+      }
+      subRows.appendChild(row);
+    });
+    g.appendChild(subRows);
+
+    const addItemWrap = el('div', null);
+    addItemWrap.style.marginLeft = '38px';
+    addItemWrap.style.marginTop = '8px';
+    const addItemBtn = el('button','btn btn-add','+ Tambah Motif');
+    addItemBtn.type='button';
+    addItemBtn.style.fontSize='12px';
+    addItemBtn.style.padding='6px 12px';
+    addItemBtn.onclick = () => { grp.items.push({motif:'',area:''}); render(); };
+    addItemWrap.appendChild(addItemBtn);
+    g.appendChild(addItemWrap);
+
+    return g;
   }
 
   function renderBrgGroup(plan, grp, gi){
@@ -582,7 +601,7 @@
       invoice: plan.invoice,
       tanggal: plan.tanggal || null,
       total_pl: plan.totalPL,
-      motif_rows: plan.motifRows,
+      motif_rows: plan.motifGroups,
       brg_groups: plan.brgGroups,
       shift: shiftGlobal,
       tanggal_laporan: tglGlobal
@@ -655,7 +674,9 @@
     const tbody = document.createElement('tbody');
     rows.forEach(r => {
       const tr = document.createElement('tr');
-      const motifSummary = (r.motif_rows||[]).map(m => [m.motif,m.area].filter(Boolean).join(' / ')).filter(Boolean).join(', ');
+      const motifSummary = (r.motif_rows||[]).map(grp =>
+        (grp.items||[]).map(it => [it.motif, it.area].filter(Boolean).join(' / ')).filter(Boolean).join(' & ')
+      ).filter(Boolean).join(', ');
       const brgSummary = (r.brg_groups||[]).map(g => g.brgDi).filter(Boolean).join(', ');
       tr.innerHTML =
         '<td>' + (r.tanggal || '-') + '</td>' +
@@ -700,11 +721,13 @@
       '*FINISH*'
     ];
 
-    (r.motif_rows || []).forEach(m => {
-      const text = [m.motif, m.area].filter(Boolean).join(' ');
-      if (text.trim() !== '') {
-        lines.push(`${m.no} ${text}`);
-      }
+    (r.motif_rows || []).forEach(grp => {
+      (grp.items || []).forEach(item => {
+        const text = [item.motif, item.area].filter(Boolean).join(' ');
+        if (text.trim() !== '') {
+          lines.push(`${grp.no} ${text}`);
+        }
+      });
     });
 
     (r.brg_groups || []).forEach(g => {
@@ -756,11 +779,13 @@
       lines.push(`TOTAL PL ${p.totalPL || '-'}`);
       lines.push('*FINISH*');
 
-      (p.motifRows || []).forEach(m => {
-        const text = [m.motif, m.area].filter(Boolean).join(' ');
-        if (text.trim() !== '') {
-          lines.push(`${m.no} ${text}`);
-        }
+      (p.motifGroups || []).forEach(grp => {
+        (grp.items || []).forEach(item => {
+          const text = [item.motif, item.area].filter(Boolean).join(' ');
+          if (text.trim() !== '') {
+            lines.push(`${grp.no} ${text}`);
+          }
+        });
       });
 
       (p.brgGroups || []).forEach(g => {
@@ -793,7 +818,6 @@
   document.getElementById('refreshBtn').onclick = loadHistory;
   document.getElementById('shareWaGlobalBtn').onclick = shareAllToWA;
 
-  ensureListNomor();
   plans.push(newPlan());
   render();
   loadHistory();
