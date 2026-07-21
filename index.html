@@ -231,6 +231,11 @@
   #statusMsg{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-soft);}
   #statusMsg.ok{color:var(--ok);}
   #statusMsg.err{color:var(--danger);}
+  #autosaveInd{
+    font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ok);
+    margin-left:10px;opacity:0;transition:opacity .4s;
+  }
+  #autosaveInd.show{opacity:1;}
   .btn-wa {
     background: #25D366; color: #fff; padding: 11px 22px; font-size: 13px;
     letter-spacing: 0.03em; text-transform: uppercase; font-family: 'Oswald', sans-serif; 
@@ -328,6 +333,7 @@
 
   <div class="submit-bar">
     <span id="statusMsg">Belum dikirim.</span>
+    <span id="autosaveInd">✓ Tersimpan otomatis</span>
     <div style="display:flex; gap:10px;">
       <button class="btn btn-wa" id="shareWaGlobalBtn" type="button">💬 Bagikan Semua ke WA</button>
       <button class="btn btn-cancel-edit" id="cancelEditBtn" type="button" style="display:none;">Batal Edit</button>
@@ -407,6 +413,55 @@
 
   function updateJson(){
     document.getElementById('jsonOut').textContent = JSON.stringify(plans, null, 2);
+    scheduleAutosave();
+  }
+
+  // ==== AUTOSAVE (localStorage) ====
+  const AUTOSAVE_KEY = 'formExportAutosaveV1';
+  let autosaveTimer = null;
+
+  function scheduleAutosave(){
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(saveAutosave, 500);
+  }
+
+  function saveAutosave(){
+    try{
+      const state = {
+        planSeq: planSeq,
+        plans: plans,
+        globalTanggal: document.getElementById('globalTanggal').value,
+        globalShift: document.getElementById('globalShift').value
+      };
+      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(state));
+      showAutosaveIndicator();
+    }catch(e){ /* localStorage penuh/diblokir — abaikan diam-diam */ }
+  }
+
+  function showAutosaveIndicator(){
+    const ind = document.getElementById('autosaveInd');
+    if(!ind) return;
+    ind.classList.add('show');
+    clearTimeout(ind._hideTimer);
+    ind._hideTimer = setTimeout(() => ind.classList.remove('show'), 1800);
+  }
+
+  function clearAutosave(){
+    try{ localStorage.removeItem(AUTOSAVE_KEY); }catch(e){}
+  }
+
+  function restoreAutosave(){
+    try{
+      const raw = localStorage.getItem(AUTOSAVE_KEY);
+      if(!raw) return false;
+      const state = JSON.parse(raw);
+      if(!state || !state.plans || !state.plans.length) return false;
+      planSeq = state.planSeq || state.plans.length;
+      plans = state.plans;
+      if(state.globalTanggal) document.getElementById('globalTanggal').value = state.globalTanggal;
+      if(state.globalShift) document.getElementById('globalShift').value = state.globalShift;
+      return true;
+    }catch(e){ return false; }
   }
 
   function dividerEl(text){
@@ -653,6 +708,7 @@
   function cancelEditPlan(){
     editingId = null;
     plans = [newPlan()];
+    clearAutosave();
     setEditModeUI(false);
     render();
     const statusEl = document.getElementById('statusMsg');
@@ -703,6 +759,7 @@
 
         editingId = null;
         plans = [newPlan()];
+        clearAutosave();
         setEditModeUI(false);
         render();
         loadHistory();
@@ -715,6 +772,7 @@
         statusEl.className = 'ok';
 
         plans = [newPlan()];
+        clearAutosave();
         render();
         loadHistory();
       }
@@ -858,6 +916,9 @@
   document.getElementById('shareWaGlobalBtn').onclick = shareAllToWA;
 
   plans.push(newPlan());
+  if(restoreAutosave()){
+    document.getElementById('statusMsg').textContent = 'Draf sebelumnya dipulihkan otomatis.';
+  }
   render();
   loadHistory();
 })();
