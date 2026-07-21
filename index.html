@@ -11,14 +11,14 @@
   :root{
     --ink:#1F2430;
     --ink-soft:#5B6472;
-    --navy:#16233F;
-    --navy-2:#223761;
-    --amber:#E2870F;
-    --amber-soft:#FBEBD3;
-    --paper:#F3F4F1;
+    --navy:#C17F0A;
+    --navy-2:#9C6608;
+    --amber:#FFC107;
+    --amber-soft:#FFF3D6;
+    --paper:#FBF8ED;
     --card:#FFFFFF;
-    --line:#D9DCE0;
-    --line-soft:#E9EAE7;
+    --line:#E8DFC2;
+    --line-soft:#F1EBD9;
     --ok:#2F7D4F;
     --danger:#B23B3B;
     --radius:4px;
@@ -131,7 +131,7 @@
     -moz-text-align-last:center;cursor:pointer;padding:0 8px;
     appearance:none;-webkit-appearance:none;
     background-color:var(--amber-soft);
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Cpath d='M0 0L4 6L8 0Z' fill='%2316233F'/%3E%3C/svg%3E");
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='6'%3E%3Cpath d='M0 0L4 6L8 0Z' fill='%23C17F0A'/%3E%3C/svg%3E");
     background-repeat:no-repeat;background-position:right 8px center;
   }
   select.idx-select.sub{
@@ -287,11 +287,45 @@
   .btn-edit{background:var(--navy-2);}
   .btn-hapus{background:var(--danger);}
 
+  /* ── MODE HP ───────────────────────── */
   @media (max-width:560px){
-    .sub-rows{margin-left:20px;}
-    .masthead{flex-direction:column;align-items:flex-start;gap:6px;}
-    .submit-bar{flex-direction:column;align-items:stretch;}
-    .hist-table{font-size:12px;}
+    body{padding:18px 10px 90px;}
+    .masthead{flex-direction:column;align-items:flex-start;gap:8px;}
+    .masthead h1{font-size:21px;}
+
+    /* cegah auto-zoom iOS saat fokus input (butuh font-size >=16px) */
+    input[type="text"], input[type="number"], input[type="date"], select{
+      font-size:16px;padding:11px 10px;
+    }
+    select.idx-select{height:44px;}
+    select.idx-select.sub{height:40px;}
+    .idx-box{height:44px;}
+
+    /* target sentuh lebih besar */
+    .btn{padding:11px 14px;min-height:44px;}
+    .btn-icon{width:40px;height:44px;}
+
+    /* baris motif+area (2 input penuh) numpuk turun biar tidak diperas */
+    .row-item{flex-wrap:wrap;}
+    .row-item input{flex:1 1 100%;}
+    .sub-rows{margin-left:14px;}
+
+    /* tombol aksi utama full-width & bertumpuk */
+    .submit-bar{flex-direction:column;align-items:stretch;gap:10px;}
+    .submit-bar > div{flex-direction:column;width:100%;}
+    .submit-bar .btn{width:100%;justify-content:center;}
+    #statusMsg, #autosaveInd{display:block;}
+    #autosaveInd{margin-left:0;}
+
+    .add-plan-wrap .btn-add-plan{width:100%;justify-content:center;}
+
+    /* judul riwayat + tombol refresh numpuk di layar sempit */
+    .history-head{flex-wrap:wrap;gap:8px;}
+    .btn-refresh{width:100%;justify-content:center;}
+
+    /* tabel riwayat: scroll horizontal daripada diperas rusak */
+    #historyWrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+    .hist-table{min-width:680px;font-size:12px;}
   }
 </style>
 </head>
