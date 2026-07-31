@@ -276,6 +276,9 @@
 
   .hist-table th.th-aksi{width:76px;text-align:center;}
   .hist-table td.td-aksi{text-align:center;padding:6px;white-space:nowrap;}
+  .hist-table th.th-check{width:36px;text-align:center;}
+  .hist-table td.td-check{text-align:center;padding:6px;}
+  .hist-table input[type="checkbox"]{width:16px;height:16px;accent-color:var(--amber);cursor:pointer;}
   .btn-aksi-icon{
     display:inline-flex;align-items:center;justify-content:center;
     width:30px;height:30px;border-radius:6px;border:none;
@@ -286,6 +289,20 @@
   .btn-aksi-icon:active{transform:scale(.94);}
   .btn-edit{background:var(--navy-2);}
   .btn-hapus{background:var(--danger);}
+
+  .selected-actions-bar{
+    display:none;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--amber-soft);border:1px solid var(--amber);border-radius:var(--radius);
+    padding:10px 14px;margin-bottom:10px;font-family:'JetBrains Mono',monospace;font-size:12px;
+    color:var(--navy);
+  }
+  .selected-actions-bar.show{display:flex;}
+  .btn-share-selected{
+    background:#25D366;color:#fff;padding:9px 16px;font-size:12px;
+    letter-spacing:0.03em;text-transform:uppercase;font-family:'Oswald',sans-serif;font-weight:600;
+    border-radius:3px;flex-shrink:0;
+  }
+  .btn-share-selected:hover{background:#1EBE55;}
 
   /* ── MODE HP ───────────────────────── */
   @media (max-width:560px){
@@ -380,6 +397,10 @@
       <h2>Riwayat Pengerjaan</h2>
       <button class="btn btn-refresh" id="refreshBtn" type="button">↻ History</button>
     </div>
+    <div id="selectedActionsBar" class="selected-actions-bar">
+      <span id="selectedCountText">0 dipilih</span>
+      <button class="btn btn-share-selected" id="shareSelectedBtn" type="button">💬 Bagikan Terpilih ke WA</button>
+    </div>
     <div id="historyWrap"><div class="hist-empty">Memuat data...</div></div>
   </div>
 
@@ -396,6 +417,8 @@
 
   let planSeq = 0;
   let plans = [];
+  let lastHistoryRows = [];
+  let selectedHistoryIds = new Set();
 
   function uid(prefix){ return prefix + '_' + Math.random().toString(36).slice(2,9); }
 
@@ -836,24 +859,34 @@
   }
 
   function renderHistory(rows){
+    lastHistoryRows = rows;
     const wrap = document.getElementById('historyWrap');
     if(!rows.length){
       wrap.innerHTML = '<div class="hist-empty">Belum ada data Pengerjaan.</div>';
+      updateSelectedBar();
       return;
     }
+    // buang id yang sudah tidak ada di data terbaru
+    const validIds = new Set(rows.map(r => r.id));
+    selectedHistoryIds.forEach(id => { if(!validIds.has(id)) selectedHistoryIds.delete(id); });
+
     const table = document.createElement('table');
     table.className = 'hist-table';
     table.innerHTML = '<thead><tr>' +
+      '<th class="th-check"><input type="checkbox" id="checkAllHistory"></th>' +
       '<th>Tanggal</th><th>Customer</th><th>Invoice</th><th>Total PL</th><th>Motif/Area</th><th>Area Barang</th><th class="th-aksi">Aksi</th>' +
       '</tr></thead>';
     const tbody = document.createElement('tbody');
     rows.forEach(r => {
       const tr = document.createElement('tr');
-      const motifSummary = (r.motif_rows||[]).map(grp =>
-        (grp.items||[]).map(it => [it.motif, it.area].filter(Boolean).join(' / ')).filter(Boolean).join(' & ')
-      ).filter(Boolean).join(', ');
+      const motifSummary = (r.motif_rows||[]).map(grp => {
+        const itemsText = (grp.items||[]).map(it => [it.motif, it.area].filter(Boolean).join(' / ')).filter(Boolean);
+        if(!itemsText.length) return '';
+        return (grp.no || '#') + ' ' + itemsText.join(' & ');
+      }).filter(Boolean).join(', ');
       const brgSummary = (r.brg_groups||[]).map(g => g.brgDi).filter(Boolean).join(', ');
       tr.innerHTML =
+        '<td class="td-check"><input type="checkbox" class="row-check"></td>' +
         '<td>' + (r.tanggal || '-') + '</td>' +
         '<td>' + (r.customer || '-') + '</td>' +
         '<td>' + (r.invoice || '-') + '</td>' +
@@ -861,6 +894,15 @@
         '<td>' + (motifSummary || '-') + '</td>' +
         '<td>' + (brgSummary || '-') + '</td>' +
         '<td class="td-aksi"></td>';
+
+      const chk = tr.querySelector('.row-check');
+      chk.checked = selectedHistoryIds.has(r.id);
+      chk.addEventListener('change', () => {
+        if(chk.checked) selectedHistoryIds.add(r.id); else selectedHistoryIds.delete(r.id);
+        updateSelectedBar();
+        syncCheckAllState();
+      });
+
       const tdAksi = tr.querySelector('.td-aksi');
       const editBtn = document.createElement('button');
       editBtn.type = 'button';
@@ -882,6 +924,86 @@
     table.appendChild(tbody);
     wrap.innerHTML = '';
     wrap.appendChild(table);
+
+    const checkAll = document.getElementById('checkAllHistory');
+    checkAll.addEventListener('change', () => {
+      rows.forEach(r => { if(checkAll.checked) selectedHistoryIds.add(r.id); else selectedHistoryIds.delete(r.id); });
+      renderHistory(rows);
+    });
+    syncCheckAllState();
+    updateSelectedBar();
+  }
+
+  function syncCheckAllState(){
+    const checkAll = document.getElementById('checkAllHistory');
+    if(!checkAll) return;
+    const rowChecks = document.querySelectorAll('.row-check');
+    const allChecked = rowChecks.length > 0 && Array.from(rowChecks).every(c => c.checked);
+    checkAll.checked = allChecked;
+  }
+
+  function updateSelectedBar(){
+    const bar = document.getElementById('selectedActionsBar');
+    const countText = document.getElementById('selectedCountText');
+    const count = selectedHistoryIds.size;
+    countText.textContent = count + ' dipilih';
+    bar.classList.toggle('show', count > 0);
+  }
+
+  // ==== BANGUN TEKS WA UNTUK 1 BARIS DATA RIWAYAT ====
+  function buildRowWaText(r){
+    const days = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+    const months = ['JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'];
+
+    const repDate = r.tanggal_laporan ? new Date(r.tanggal_laporan) : null;
+    const repStr = (repDate && !isNaN(repDate)) ? `${days[repDate.getDay()]}, ${repDate.getDate()} ${months[repDate.getMonth()]} ${repDate.getFullYear()}` : (r.tanggal_laporan || '-');
+    const shift = r.shift || '1';
+    const stufingStr = r.tanggal ? r.tanggal.toUpperCase() : '-';
+
+    const lines = [
+      `*REPORT UPDATE PENGERJAAN EXPORT SHIFT ${shift}*`,
+      repStr,
+      '',
+      `✅ *${r.customer || '-'} INV ${r.invoice || '-'}*`,
+      `RENCANA STUFING ${stufingStr}`,
+      `TOTAL PL ${r.total_pl || '-'}`,
+      '*FINISH*'
+    ];
+
+    (r.motif_rows || []).forEach(grp => {
+      (grp.items || []).forEach(item => {
+        const text = [item.motif, item.area].filter(Boolean).join(' ');
+        if (text.trim() !== '') {
+          lines.push(`${grp.no || '#'} ${text}`);
+        }
+      });
+    });
+
+    (r.brg_groups || []).forEach(g => {
+      const isAreaFilled = g.brgDi && g.brgDi.trim() !== '';
+      const hasItemFilled = g.items && g.items.some(item => item.value && item.value.trim() !== '');
+
+      if (isAreaFilled || hasItemFilled) {
+        lines.push('');
+        lines.push(`*BARANG DI AREA ${isAreaFilled ? g.brgDi.toUpperCase() : '-'}*`);
+
+        (g.items || []).forEach(item => {
+          if (item.value && item.value.trim() !== '') {
+            lines.push(`${item.no || '#'} ${item.value}`);
+          }
+        });
+      }
+    });
+
+    return lines.join('\n');
+  }
+
+  // ==== BAGIKAN DATA YANG DICEKLIS KE WA ====
+  function shareSelectedToWA(){
+    if(selectedHistoryIds.size === 0) return;
+    const selectedRows = lastHistoryRows.filter(r => selectedHistoryIds.has(r.id));
+    const text = selectedRows.map(buildRowWaText).join('\n\n——————————\n\n');
+    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
   }
 
   // ==== SHARE SEMUA PENGERJAAN KE WA SEKALIGUS ====
@@ -948,6 +1070,7 @@
   document.getElementById('cancelEditBtn').onclick = cancelEditPlan;
   document.getElementById('refreshBtn').onclick = loadHistory;
   document.getElementById('shareWaGlobalBtn').onclick = shareAllToWA;
+  document.getElementById('shareSelectedBtn').onclick = shareSelectedToWA;
 
   plans.push(newPlan());
   if(restoreAutosave()){
