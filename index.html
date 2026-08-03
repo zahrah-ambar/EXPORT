@@ -431,8 +431,7 @@
       invoice: '',
       tanggal: '',
       totalPL: '',
-      motifGroups: [ { no:'#1', items:[ { motif:'', area:'' } ] } ],
-      brgGroups: [ { brgDi:'', items:[ { no:'#1', value:'' } ] } ]
+      motifGroups: [ { no:'#1', items:[ { motif:'', area:'' } ] } ]
     };
   }
 
@@ -602,16 +601,6 @@
     addMotifWrap.appendChild(addMotifBtn);
     body.appendChild(addMotifWrap);
 
-    // DIVIDER: Area Brg
-    body.appendChild(dividerEl('Area Barang (Contoh: FG07/EXPORT)'));
-    plan.brgGroups.forEach((grp, gi) => body.appendChild(renderBrgGroup(plan, grp, gi)));
-    const addBrgWrap = el('div','add-brg-wrap');
-    const addBrgBtn = el('button','btn btn-add','+ Tambah Area Barang');
-    addBrgBtn.type='button';
-    addBrgBtn.onclick = () => { plan.brgGroups.push({brgDi:'', items:[{ no:'#1', value:'' }]}); render(); };
-    addBrgWrap.appendChild(addBrgBtn);
-    body.appendChild(addBrgWrap);
-
     card.appendChild(body);
 
     return card;
@@ -665,54 +654,6 @@
     return g;
   }
 
-  function renderBrgGroup(plan, grp, gi){
-    const g = el('div','brg-group');
-    const head = el('div','brg-head');
-    head.appendChild(el('div','idx-box', String(gi+1)+'.'));
-    const inBrg = document.createElement('input');
-    inBrg.type='text'; inBrg.placeholder='Brg di .... (cth: FG07/EXPORT)'; inBrg.value=grp.brgDi;
-    inBrg.oninput = e => { grp.brgDi = e.target.value; updateJson(); };
-    head.appendChild(inBrg);
-    if(plan.brgGroups.length > 1){
-      const rm = el('button','btn btn-icon','✕');
-      rm.type='button'; rm.title='Hapus area barang';
-      rm.onclick = () => { plan.brgGroups.splice(gi,1); render(); };
-      head.appendChild(rm);
-    }
-    g.appendChild(head);
-
-    const subRows = el('div','sub-rows');
-    grp.items.forEach((item, ii) => {
-      const row = el('div','row-item');
-      row.appendChild(makeNoSelect(item.no || ('#'+(ii+1)), (v)=>{ item.no = v; }, 'sub'));
-      const inV = document.createElement('input');
-      inV.type='text'; inV.placeholder='......... (motif/manual)'; inV.value=item.value;
-      inV.oninput = e => { item.value = e.target.value; updateJson(); };
-      row.appendChild(inV);
-      if(grp.items.length > 1){
-        const rm = el('button','btn btn-icon rm-btn','✕');
-        rm.type='button'; rm.title='Hapus item';
-        rm.onclick = () => { grp.items.splice(ii,1); render(); };
-        row.appendChild(rm);
-      }
-      subRows.appendChild(row);
-    });
-    g.appendChild(subRows);
-
-    const addItemWrap = el('div', null);
-    addItemWrap.style.marginLeft = '38px';
-    addItemWrap.style.marginTop = '8px';
-    const addItemBtn = el('button','btn btn-add','+ Tambah Motif');
-    addItemBtn.type='button';
-    addItemBtn.style.fontSize='12px';
-    addItemBtn.style.padding='6px 12px';
-    addItemBtn.onclick = () => { grp.items.push({no:'#'+Math.min(grp.items.length+1,30),value:''}); render(); };
-    addItemWrap.appendChild(addItemBtn);
-    g.appendChild(addItemWrap);
-
-    return g;
-  }
-
   // ==== SUBMIT: kirim semua pengerjaan ke Supabase ====
   let editingId = null;
 
@@ -725,7 +666,6 @@
       tanggal: plan.tanggal || null,
       total_pl: plan.totalPL,
       motif_rows: plan.motifGroups,
-      brg_groups: plan.brgGroups,
       shift: shiftGlobal,
       tanggal_laporan: tglGlobal
     };
@@ -749,8 +689,7 @@
       invoice: r.invoice || '',
       tanggal: r.tanggal || '',
       totalPL: r.total_pl || '',
-      motifGroups: (r.motif_rows && r.motif_rows.length) ? r.motif_rows : [{ no:'#1', items:[{motif:'',area:''}] }],
-      brgGroups: (r.brg_groups && r.brg_groups.length) ? r.brg_groups : [{ brgDi:'', items:[{no:'#1',value:''}] }]
+      motifGroups: (r.motif_rows && r.motif_rows.length) ? r.motif_rows : [{ no:'#1', items:[{motif:'',area:''}] }]
     }];
     if(r.tanggal_laporan) document.getElementById('globalTanggal').value = r.tanggal_laporan;
     if(r.shift) document.getElementById('globalShift').value = r.shift;
@@ -874,7 +813,7 @@
     table.className = 'hist-table';
     table.innerHTML = '<thead><tr>' +
       '<th class="th-check"><input type="checkbox" id="checkAllHistory"></th>' +
-      '<th>Tanggal</th><th>Customer</th><th>Invoice</th><th>Total PL</th><th>Motif/Area</th><th>Area Barang</th><th class="th-aksi">Aksi</th>' +
+      '<th>Tanggal</th><th>Customer</th><th>Invoice</th><th>Total PL</th><th>Motif/Area</th><th class="th-aksi">Aksi</th>' +
       '</tr></thead>';
     const tbody = document.createElement('tbody');
     rows.forEach(r => {
@@ -884,7 +823,6 @@
         if(!itemsText.length) return '';
         return (grp.no || '#') + ' ' + itemsText.join(' & ');
       }).filter(Boolean).join(', ');
-      const brgSummary = (r.brg_groups||[]).map(g => g.brgDi).filter(Boolean).join(', ');
       tr.innerHTML =
         '<td class="td-check"><input type="checkbox" class="row-check"></td>' +
         '<td>' + (r.tanggal || '-') + '</td>' +
@@ -892,7 +830,6 @@
         '<td>' + (r.invoice || '-') + '</td>' +
         '<td>' + (r.total_pl || '-') + '</td>' +
         '<td>' + (motifSummary || '-') + '</td>' +
-        '<td>' + (brgSummary || '-') + '</td>' +
         '<td class="td-aksi"></td>';
 
       const chk = tr.querySelector('.row-check');
@@ -979,22 +916,6 @@
       });
     });
 
-    (r.brg_groups || []).forEach(g => {
-      const isAreaFilled = g.brgDi && g.brgDi.trim() !== '';
-      const hasItemFilled = g.items && g.items.some(item => item.value && item.value.trim() !== '');
-
-      if (isAreaFilled || hasItemFilled) {
-        lines.push('');
-        lines.push(`*BARANG DI AREA ${isAreaFilled ? g.brgDi.toUpperCase() : '-'}*`);
-
-        (g.items || []).forEach(item => {
-          if (item.value && item.value.trim() !== '') {
-            lines.push(`${item.no || '#'} ${item.value}`);
-          }
-        });
-      }
-    });
-
     return lines.join('\n');
   }
 
@@ -1038,22 +959,6 @@
             lines.push(`${grp.no} ${text}`);
           }
         });
-      });
-
-      (p.brgGroups || []).forEach(g => {
-        const isAreaFilled = g.brgDi && g.brgDi.trim() !== '';
-        const hasItemFilled = g.items && g.items.some(item => item.value && item.value.trim() !== '');
-
-        if (isAreaFilled || hasItemFilled) {
-          lines.push('');
-          lines.push(`*BARANG DI AREA ${isAreaFilled ? g.brgDi.toUpperCase() : '-'}*`);
-
-          (g.items || []).forEach(item => {
-            if (item.value && item.value.trim() !== '') {
-              lines.push(`${item.no} ${item.value}`);
-            }
-          });
-        }
       });
     });
 
